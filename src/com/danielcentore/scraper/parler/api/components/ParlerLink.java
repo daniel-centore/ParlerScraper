@@ -238,4 +238,29 @@ public class ParlerLink {
         this.metadataVideo = metadataVideo;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((linkId == null) ? 0 : linkId.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ParlerLink other = (ParlerLink) obj;
+        if (linkId == null) {
+            if (other.linkId != null)
+                return false;
+        } else if (!linkId.equals(other.linkId))
+            return false;
+        return true;
+    }
+
 }

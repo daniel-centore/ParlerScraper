@@ -2,7 +2,9 @@ package com.danielcentore.scraper.parler.db;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,8 +28,10 @@ public class ScraperDb {
     public ScraperDb() {
         // Adjusting logging level
         Logger.getLogger("org.hibernate").setLevel(Level.WARNING);
+        System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog");
+        System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "WARNING");
 
-        
+
         SessionFactory sessionFactory = new Configuration()
                 .configure(new File("./hibernate.cfg.xml"))
                 .buildSessionFactory();
@@ -44,10 +48,13 @@ public class ScraperDb {
         storeUsers(pagedPosts.getUsers());
     }
 
-    private void storeLinks(List<ParlerLink> links) {
+    private void storeLinks(Collection<ParlerLink> links) {
         if (links == null) {
             return;
         }
+
+        // Make sure there's only one of each
+        links = new HashSet<ParlerLink>(links);
 
         List<String> parlerIds = links.stream().map(post -> post.getLinkId()).collect(Collectors.toList());
 
@@ -74,12 +81,15 @@ public class ScraperDb {
         storeUsers(pagedUsers.getUsers());
     }
 
-    public void storePosts(List<ParlerPost> posts) {
+    public void storePosts(Collection<ParlerPost> posts) {
         if (posts == null) {
             return;
         }
 
         storeHashtags(posts);
+
+        // Make sure there's only one of each
+        posts = new HashSet<>(posts);
 
         List<String> parlerIds = posts.stream().map(post -> post.getParlerId()).collect(Collectors.toList());
 
@@ -102,7 +112,7 @@ public class ScraperDb {
         session.getTransaction().commit();
     }
 
-    public void storeHashtags(List<ParlerPost> posts) {
+    public void storeHashtags(Collection<ParlerPost> posts) {
         if (posts == null) {
             return;
         }
@@ -116,7 +126,10 @@ public class ScraperDb {
         storeUsers(input);
     }
 
-    public void storeUsers(List<ParlerUser> users) {
+    public void storeUsers(Collection<ParlerUser> users) {
+        // Make sure there's only one of each
+        users = new HashSet<ParlerUser>(users);
+
         List<String> parlerIds = users.stream().map(user -> user.getParlerId()).collect(Collectors.toList());
 
         MultiIdentifierLoadAccess<ParlerUser> multiLoadAccess = session.byMultipleIds(ParlerUser.class);

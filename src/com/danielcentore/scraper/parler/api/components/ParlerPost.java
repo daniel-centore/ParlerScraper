@@ -295,4 +295,29 @@ public class ParlerPost {
         this.upvotes = upvotes;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((parlerId == null) ? 0 : parlerId.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ParlerPost other = (ParlerPost) obj;
+        if (parlerId == null) {
+            if (other.parlerId != null)
+                return false;
+        } else if (!parlerId.equals(other.parlerId))
+            return false;
+        return true;
+    }
+
 }
