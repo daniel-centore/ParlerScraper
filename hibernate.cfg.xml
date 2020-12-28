@@ -13,5 +13,6 @@
         <mapping class="com.danielcentore.scraper.parler.api.components.ParlerUser"/>
         <mapping class="com.danielcentore.scraper.parler.api.components.ParlerPost"/>
         <mapping class="com.danielcentore.scraper.parler.api.components.ParlerLink"/>
+        <mapping class="com.danielcentore.scraper.parler.api.components.ParlerHashtag"/>
     </session-factory>
 </hibernate-configuration>

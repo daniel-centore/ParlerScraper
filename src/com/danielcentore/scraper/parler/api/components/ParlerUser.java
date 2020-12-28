@@ -9,7 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import com.danielcentore.scraper.parler.Utils;
+import com.danielcentore.scraper.parler.PUtils;
 import com.danielcentore.scraper.parler.api.ParlerClient;
 import com.danielcentore.scraper.parler.db.ListToJsonConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -132,13 +132,13 @@ public class ParlerUser {
             @JsonProperty("posts") String posts,
             @JsonProperty("media") String media) {
         this.parlerId = (idA != null && !idA.isEmpty()) ? idA : idB;
-        this.score = Utils.deparlify(score);
-        this.comments = Utils.deparlify(comments);
-        this.followers = Utils.deparlify(followers);
-        this.following = Utils.deparlify(following);
-        this.likes = Utils.deparlify(likes);
-        this.posts = Utils.deparlify(posts);
-        this.media = Utils.deparlify(media);
+        this.score = PUtils.deparlify(score);
+        this.comments = PUtils.deparlify(comments);
+        this.followers = PUtils.deparlify(followers);
+        this.following = PUtils.deparlify(following);
+        this.likes = PUtils.deparlify(likes);
+        this.posts = PUtils.deparlify(posts);
+        this.media = PUtils.deparlify(media);
         this.fullyScanned = false;
     }
 

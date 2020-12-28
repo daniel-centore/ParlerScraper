@@ -2,7 +2,10 @@ package com.danielcentore.scraper.parler.api.components;
 
 import java.util.List;
 
+import com.danielcentore.scraper.parler.PUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.squareup.okhttp.internal.Util;
+
 
 /**
  * Used for deserializing a paged response containing posts. This can come from, e.g., a hashtag search or a profile
@@ -33,12 +36,16 @@ public class PagedParlerPosts extends PagedParlerResponse {
 
     // == Weird Parler Numbers (e.g. "2.3m") == //
 
-    @JsonProperty("pendingFollowers")
-    String pendingFollowers;
+    Long pendingFollowers;
 
     // We get this for search results but not from users
-    @JsonProperty("totalPosts")
-    String totalPosts;
+    Long totalPosts;
+
+    public PagedParlerPosts(@JsonProperty("pendingFollowers") String pendingFollowers,
+            @JsonProperty("totalPosts") String totalPosts) {
+        this.pendingFollowers = PUtils.deparlify(pendingFollowers);
+        this.totalPosts = PUtils.deparlify(totalPosts);
+    }
 
     public Integer getBadge() {
         return badge;
@@ -88,19 +95,19 @@ public class PagedParlerPosts extends PagedParlerResponse {
         this.users = users;
     }
 
-    public String getPendingFollowers() {
+    public Long getPendingFollowers() {
         return pendingFollowers;
     }
 
-    public void setPendingFollowers(String pendingFollowers) {
+    public void setPendingFollowers(Long pendingFollowers) {
         this.pendingFollowers = pendingFollowers;
     }
 
-    public String getTotalPosts() {
+    public Long getTotalPosts() {
         return totalPosts;
     }
 
-    public void setTotalPosts(String totalPosts) {
+    public void setTotalPosts(Long totalPosts) {
         this.totalPosts = totalPosts;
     }
 }

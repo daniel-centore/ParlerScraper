@@ -2,7 +2,7 @@ package com.danielcentore.scraper.parler;
 
 import java.math.BigDecimal;
 
-public class Utils {
+public class PUtils {
 
     /**
      * Converts numbers provided by the Parler API to regular integers

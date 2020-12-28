@@ -9,7 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import com.danielcentore.scraper.parler.Utils;
+import com.danielcentore.scraper.parler.PUtils;
 import com.danielcentore.scraper.parler.db.ListToJsonConverter;
 import com.danielcentore.scraper.parler.db.MapToJsonConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -108,10 +108,10 @@ public class ParlerPost {
             @JsonProperty("upvotes") String upvotes) {
         this.parlerId = (idA != null && !idA.isEmpty()) ? idA : idB;
 
-        this.comments = Utils.deparlify(comments);
-        this.impressions = Utils.deparlify(impressions);
-        this.reposts = Utils.deparlify(reposts);
-        this.upvotes = Utils.deparlify(upvotes);
+        this.comments = PUtils.deparlify(comments);
+        this.impressions = PUtils.deparlify(impressions);
+        this.reposts = PUtils.deparlify(reposts);
+        this.upvotes = PUtils.deparlify(upvotes);
     }
 
     public ParlerPost() {

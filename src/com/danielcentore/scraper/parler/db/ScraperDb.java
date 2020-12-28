@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.hibernate.IdentifierLoadAccess;
 import org.hibernate.MultiIdentifierLoadAccess;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -17,6 +18,7 @@ import org.hibernate.cfg.Configuration;
 
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
+import com.danielcentore.scraper.parler.api.components.ParlerHashtag;
 import com.danielcentore.scraper.parler.api.components.ParlerLink;
 import com.danielcentore.scraper.parler.api.components.ParlerPost;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
@@ -35,7 +37,6 @@ public class ScraperDb {
         Logger.getLogger("org.hibernate").setLevel(Level.WARNING);
         System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog");
         System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "WARNING");
-
 
         SessionFactory sessionFactory = new Configuration()
                 .configure(new File("./hibernate.cfg.xml"))
@@ -121,8 +122,57 @@ public class ScraperDb {
         if (posts == null) {
             return;
         }
+        // Make sure there's only one of each
+        posts = new HashSet<ParlerPost>(posts);
 
-        // TODO
+        HashMap<String, Integer> hashTagsAdded = new HashMap<>();
+
+        for (ParlerPost post : posts) {
+            if (post == null) {
+                continue;
+            }
+            for (String ht : post.getHashtags()) {
+                ht = ht.toLowerCase();
+                if (!hashTagsAdded.containsKey(ht)) {
+                    hashTagsAdded.put(ht, 0);
+                }
+                hashTagsAdded.put(ht, hashTagsAdded.get(ht) + 1);
+            }
+        }
+
+        MultiIdentifierLoadAccess<ParlerHashtag> multiLoadAccess = session.byMultipleIds(ParlerHashtag.class);
+        List<ParlerHashtag> existingHashtagsList = multiLoadAccess.multiLoad(new ArrayList<>(hashTagsAdded.keySet()));
+        HashMap<String, ParlerHashtag> existingHashtags = new HashMap<>();
+        for (ParlerHashtag pht : existingHashtagsList) {
+            if (pht == null) {
+                continue;
+            }
+            existingHashtags.put(pht.getHashtag(), pht);
+        }
+
+        session.beginTransaction();
+        for (String hashtag : hashTagsAdded.keySet()) {
+            ParlerHashtag parlerHashtag = existingHashtags.containsKey(hashtag)
+                    ? existingHashtags.get(hashtag)
+                    : new ParlerHashtag(hashtag);
+            parlerHashtag.setEncounters(parlerHashtag.getEncounters() + hashTagsAdded.get(hashtag));
+            session.saveOrUpdate(parlerHashtag);
+        }
+        session.getTransaction().commit();
+    }
+    
+    public void storeHashtagTotalPostCount(String hashtag, Long totalPosts) {
+        hashtag = hashtag.toLowerCase();
+        
+        IdentifierLoadAccess<ParlerHashtag> byId = session.byId(ParlerHashtag.class);
+        ParlerHashtag parlerHashtag = byId.load(hashtag);
+        if (parlerHashtag == null) {
+            parlerHashtag = new ParlerHashtag(hashtag);
+        }
+        parlerHashtag.setTotalPosts(totalPosts);
+        session.beginTransaction();
+        session.saveOrUpdate(parlerHashtag);
+        session.getTransaction().commit();
     }
 
     public void storeUser(ParlerUser user) {
