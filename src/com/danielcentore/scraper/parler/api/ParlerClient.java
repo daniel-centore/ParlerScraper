@@ -6,7 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
@@ -25,8 +26,6 @@ import com.squareup.okhttp.Response;
  */
 public class ParlerClient {
 
-    public static final File CREDENTIALS = new File("./credentials.txt");
-
     public static String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) "
             + "Chrome/87.0.4280.88 Safari/537.36";
@@ -35,15 +34,15 @@ public class ParlerClient {
     public static String API_DOMAIN = "https://api.parler.com";
 
     private static ObjectMapper mapper = new ObjectMapper();
+    
+    private List<ICookiesListener> cookiesListeners = new ArrayList<>();
 
     private String mst;
     private String jst;
 
-    public ParlerClient() throws FileNotFoundException {
-        Scanner scan = new Scanner(CREDENTIALS);
-        this.mst = scan.nextLine();
-        this.jst = scan.nextLine();
-        scan.close();
+    public ParlerClient(String mst, String jst) {
+        this.mst = mst;
+        this.jst = jst;
     }
 
     public Response issueRequest(String referrer, String endpoint) {
@@ -84,12 +83,9 @@ public class ParlerClient {
 
             // Rewrite credentials if necessary
             if (updated) {
-                System.out.println("Rewrote credentials: ");
-                System.out.println("MST: " + this.mst);
-                System.out.println("JST: " + this.jst);
-                FileWriter fileWriter = new FileWriter(CREDENTIALS, false);
-                fileWriter.write(this.mst + "\n" + this.jst);
-                fileWriter.close();
+                for (ICookiesListener listener : this.cookiesListeners) {
+                    listener.cookiesUpdated(mst, jst);
+                }
             }
 
             return response;
@@ -229,6 +225,10 @@ public class ParlerClient {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+    
+    public void addCookieListener(ICookiesListener listener) {
+        cookiesListeners.add(listener);
     }
 
 }
