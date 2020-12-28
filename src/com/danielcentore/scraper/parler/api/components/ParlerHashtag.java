@@ -25,6 +25,10 @@ public class ParlerHashtag {
         this.totalPosts = totalPosts;
     }
 
+    public ParlerHashtag() {
+        // Needed for Hibernate to load
+    }
+
     @Id
     @Column(name = "hashtag_lowercase")
     public String getHashtag() {

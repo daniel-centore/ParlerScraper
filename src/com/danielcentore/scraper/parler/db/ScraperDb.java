@@ -22,6 +22,7 @@ import com.danielcentore.scraper.parler.api.components.ParlerHashtag;
 import com.danielcentore.scraper.parler.api.components.ParlerLink;
 import com.danielcentore.scraper.parler.api.components.ParlerPost;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
+import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 
 /**
  * Stores and retrieves data from the local sqlite database
@@ -31,8 +32,11 @@ import com.danielcentore.scraper.parler.api.components.ParlerUser;
 public class ScraperDb {
 
     private Session session;
+    private ParlerScraperGui gui;
 
-    public ScraperDb() {
+    public ScraperDb(ParlerScraperGui gui) {
+        this.gui = gui;
+
         // Adjusting logging level
         Logger.getLogger("org.hibernate").setLevel(Level.WARNING);
         System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog");
@@ -73,14 +77,14 @@ public class ScraperDb {
             }
         }
 
-        session.beginTransaction();
+        beginTransaction();
         for (ParlerLink link : links) {
             if (existingLinks.containsKey(link.getLinkId())) {
                 session.detach(existingLinks.get(link.getLinkId()));
             }
             session.saveOrUpdate(link);
         }
-        session.getTransaction().commit();
+        endTransaction();
     }
 
     public void storePagedUsers(PagedParlerUsers pagedUsers) {
@@ -108,14 +112,14 @@ public class ScraperDb {
             }
         }
 
-        session.beginTransaction();
+        beginTransaction();
         for (ParlerPost post : posts) {
             if (existingPosts.containsKey(post.getParlerId())) {
                 session.detach(existingPosts.get(post.getParlerId()));
             }
             session.saveOrUpdate(post);
         }
-        session.getTransaction().commit();
+        endTransaction();
     }
 
     public void storeHashtags(Collection<ParlerPost> posts) {
@@ -150,7 +154,7 @@ public class ScraperDb {
             existingHashtags.put(pht.getHashtag(), pht);
         }
 
-        session.beginTransaction();
+        beginTransaction();
         for (String hashtag : hashTagsAdded.keySet()) {
             ParlerHashtag parlerHashtag = existingHashtags.containsKey(hashtag)
                     ? existingHashtags.get(hashtag)
@@ -158,21 +162,21 @@ public class ScraperDb {
             parlerHashtag.setEncounters(parlerHashtag.getEncounters() + hashTagsAdded.get(hashtag));
             session.saveOrUpdate(parlerHashtag);
         }
-        session.getTransaction().commit();
+        endTransaction();
     }
-    
+
     public void storeHashtagTotalPostCount(String hashtag, Long totalPosts) {
         hashtag = hashtag.toLowerCase();
-        
+
         IdentifierLoadAccess<ParlerHashtag> byId = session.byId(ParlerHashtag.class);
         ParlerHashtag parlerHashtag = byId.load(hashtag);
         if (parlerHashtag == null) {
             parlerHashtag = new ParlerHashtag(hashtag);
         }
         parlerHashtag.setTotalPosts(totalPosts);
-        session.beginTransaction();
+        beginTransaction();
         session.saveOrUpdate(parlerHashtag);
-        session.getTransaction().commit();
+        endTransaction();
     }
 
     public void storeUser(ParlerUser user) {
@@ -196,7 +200,7 @@ public class ScraperDb {
             }
         }
 
-        session.beginTransaction();
+        beginTransaction();
         for (ParlerUser user : users) {
             ParlerUser existingUser = existingUsers.get(user.getParlerId());
 
@@ -214,12 +218,24 @@ public class ScraperDb {
                 }
             }
         }
-        session.getTransaction().commit();
+        endTransaction();
     }
 
     @SuppressWarnings("unchecked")
     public List<ParlerUser> getAllNotWorthlessUsers() {
         return session.createQuery("FROM ParlerUser U WHERE U.score > 0").getResultList();
+    }
+
+    public void beginTransaction() {
+        session.beginTransaction();
+    }
+
+    public void endTransaction() {
+        session.getTransaction().commit();
+
+        long totalRows = (long) session.createQuery("SELECT count(*) FROM ParlerUser U WHERE U.score > 0")
+                .getSingleResult();
+        gui.println("Scores> 0: " + totalRows);
     }
 
 }

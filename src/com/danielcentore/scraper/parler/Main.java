@@ -46,7 +46,7 @@ public class Main implements ICookiesListener {
         gui.setVisible(true);
         gui.println("Initializing database...");
 
-        scraperDb = new ScraperDb();
+        scraperDb = new ScraperDb(gui);
 
         client = new ParlerClient(mst, jst);
         client.addCookieListener(this);

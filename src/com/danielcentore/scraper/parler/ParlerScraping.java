@@ -30,10 +30,13 @@ public class ParlerScraping {
 
     public void scrape(ParlerTime startTime, ParlerTime endTime) {
         String hashtag = "maga";
+        gui.println("Fetching #" + hashtag + "...");
         PagedParlerPosts hastagPosts = client.fetchPagedHashtag(hashtag);
+        gui.println("Storing...");
         db.storePagedPosts(hastagPosts);
-        db.storeHashtagTotalPostCount(hashtag, hastagPosts.getTotalPosts());
-        
+//        gui.println("Storing2...");
+//        db.storeHashtagTotalPostCount(hashtag, hastagPosts.getTotalPosts());
+        gui.println("Done storing");
 
         //        stopRequested = false;
         //
