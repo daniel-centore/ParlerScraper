@@ -1,8 +1,12 @@
 package com.danielcentore.scraper.parler.api;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Scanner;
 
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
@@ -15,6 +19,8 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 public class ParlerClient {
+    
+    public static final File CREDENTIALS = new File("./credentials.txt");
 
     public static String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -28,9 +34,11 @@ public class ParlerClient {
     private String mst;
     private String jst;
 
-    public ParlerClient(String mst, String jst) {
-        this.mst = mst;
-        this.jst = jst;
+    public ParlerClient() throws FileNotFoundException {
+        Scanner scan = new Scanner(CREDENTIALS);
+        this.mst = scan.nextLine();
+        this.jst = scan.nextLine();
+        scan.close();
     }
 
     public Response issueRequest(String referrer, String endpoint) {
@@ -51,17 +59,32 @@ public class ParlerClient {
         try {
             Response response = client.newCall(request).execute();
 
-            for (String header : response.headers("Set-Cookie")) {
-                String[] split = header.split("=");
+            boolean updated = false;
+            for (String header : response.headers("set-cookie")) {
+                String[] components = header.split(";");
+                String mainComponent = components[0];
+
+                String[] split = mainComponent.split("=");
                 String name = split[0].trim();
                 String value = split[1].trim();
-                if (name == "jst") {
+
+                if (name.equals("jst") && !this.jst.equals(value)) {
                     this.jst = value;
-                    System.out.println("jst: " + this.jst);
-                } else if (name == "mst") {
+                    updated = true;
+                } else if (name.equals("mst") && !this.mst.equals(value)) {
                     this.mst = value;
-                    System.out.println("mst: " + this.mst);
+                    updated = true;
                 }
+            }
+
+            // Rewrite credentials if necessary
+            if (updated) {
+                System.out.println("Rewrote credentials: ");
+                System.out.println("MST: " + this.mst);
+                System.out.println("JST: " + this.jst); 
+                FileWriter fileWriter = new FileWriter(CREDENTIALS, false);
+                fileWriter.write(this.mst + "\n" + this.jst);
+                fileWriter.close();
             }
 
             return response;

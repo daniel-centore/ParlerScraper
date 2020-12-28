@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.hibernate.MultiIdentifierLoadAccess;
@@ -22,16 +24,15 @@ public class ScraperDb {
     private Session session;
 
     public ScraperDb() {
+        // Adjusting logging level
+        Logger.getLogger("org.hibernate").setLevel(Level.WARNING);
+
+        
         SessionFactory sessionFactory = new Configuration()
                 .configure(new File("./hibernate.cfg.xml"))
                 .buildSessionFactory();
 
         session = sessionFactory.openSession();
-
-        // Switch to Write-Ahead Logging mode (allows concurrent db access?)
-        //	session.beginTransaction();
-        //	session.createSQLQuery("PRAGMA journal_mode=WAL;");
-        //	session.getTransaction().commit();
     }
 
     public void storePagedPosts(PagedParlerPosts pagedPosts) {

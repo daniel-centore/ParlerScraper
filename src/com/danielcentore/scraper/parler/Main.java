@@ -1,8 +1,6 @@
 package com.danielcentore.scraper.parler;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Scanner;
 
 import com.danielcentore.scraper.parler.api.ParlerClient;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
@@ -13,12 +11,7 @@ public class Main {
     public static void main(String[] args) throws FileNotFoundException {
         ScraperDb scraperDb = new ScraperDb();
 
-        Scanner scan = new Scanner(new File("./credentials.txt"));
-        String mst = scan.nextLine();
-        String jst = scan.nextLine();
-        scan.close();
-
-        ParlerClient client = new ParlerClient(mst, jst);
+        ParlerClient client = new ParlerClient();
 
         //	ParlerUser profile = client.fetchProfile("TuckerCarlson");
         //	scraperDb.storeUser(profile);
@@ -37,7 +30,7 @@ public class Main {
         //	PagedParlerPosts posts = client.fetchPagedPosts(profile);
         //	scraperDb.storePagedPosts(posts);
         //	System.out.println(posts);
-        PagedParlerPosts hastagPosts = client.fetchPagedHashtag("parler");
+        PagedParlerPosts hastagPosts = client.fetchPagedHashtag("maga");
         scraperDb.storePagedPosts(hastagPosts);
         //	System.out.println(hastagPosts);
     }

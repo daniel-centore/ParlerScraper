@@ -8,7 +8,7 @@
         <property name="connection.driver_class">org.sqlite.JDBC</property>
         <property name="connection.url">jdbc:sqlite:parler_scraper_database.db</property>
         <property name="dialect">org.sqlite.hibernate.dialect.SQLiteDialect</property>
-        <property name="show_sql">true</property>
+        <property name="show_sql">false</property>
         <property name="hbm2ddl.auto">update</property>
         <mapping class="com.danielcentore.scraper.parler.api.components.ParlerUser"/>
         <mapping class="com.danielcentore.scraper.parler.api.components.ParlerPost"/>
