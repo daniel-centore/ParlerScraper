@@ -14,6 +14,13 @@ import com.danielcentore.scraper.parler.db.ListToJsonConverter;
 import com.danielcentore.scraper.parler.db.MapToJsonConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Represents a Parler Post.
+ * 
+ * Can be converted from Parler API JSON and to/from the database .
+ *
+ * @author Daniel Centore
+ */
 @Entity
 @Table(name = "posts")
 public class ParlerPost {

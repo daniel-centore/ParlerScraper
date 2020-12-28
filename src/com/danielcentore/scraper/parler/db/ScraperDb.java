@@ -21,6 +21,11 @@ import com.danielcentore.scraper.parler.api.components.ParlerLink;
 import com.danielcentore.scraper.parler.api.components.ParlerPost;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
 
+/**
+ * Stores and retrieves data from the local sqlite database
+ *
+ * @author Daniel Centore
+ */
 public class ScraperDb {
 
     private Session session;

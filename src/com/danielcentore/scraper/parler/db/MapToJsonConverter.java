@@ -8,6 +8,11 @@ import javax.persistence.Converter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Converts Maps to and from JSON strings for storing in the database
+ *
+ * @author Daniel Centore
+ */
 @Converter
 public class MapToJsonConverter<T, K> implements AttributeConverter<Map<T, K>, String> {
 

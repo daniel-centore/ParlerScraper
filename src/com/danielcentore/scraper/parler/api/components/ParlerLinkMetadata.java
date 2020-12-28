@@ -3,7 +3,15 @@ package com.danielcentore.scraper.parler.api.components;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-// The metadata often contains lots of weird properties, just ignore them
+/**
+ * Represents Parler Link Metadata
+ * 
+ * This is used just for JSON extraction. These properties are ultimately encoded into the {@link ParlerLink}.
+ * 
+ * The metadata often contains lots of weird properties, we just ignore them.
+ *
+ * @author Daniel Centore
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ParlerLinkMetadata {
 

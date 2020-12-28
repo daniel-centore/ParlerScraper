@@ -8,6 +8,11 @@ import javax.persistence.Converter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Converts Lists to and from JSON strings for storing in the database
+ *
+ * @author Daniel Centore
+ */
 @Converter
 public class ListToJsonConverter<T> implements AttributeConverter<List<T>, String> {
 

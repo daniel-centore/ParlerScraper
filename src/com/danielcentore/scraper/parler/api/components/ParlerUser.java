@@ -14,6 +14,15 @@ import com.danielcentore.scraper.parler.api.ParlerClient;
 import com.danielcentore.scraper.parler.db.ListToJsonConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Represents a Parler User.
+ * 
+ * Can be converted from Parler API JSON and to/from the database.
+ * 
+ * Many fields are not always set.
+ *
+ * @author Daniel Centore
+ */
 @Entity
 @Table(name = "users")
 public class ParlerUser {

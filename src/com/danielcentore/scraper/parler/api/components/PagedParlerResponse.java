@@ -3,6 +3,11 @@ package com.danielcentore.scraper.parler.api.components;
 import com.danielcentore.scraper.parler.api.ParlerTime;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Represents any type of paged response coming from Parler
+ *
+ * @author Daniel Centore
+ */
 public class PagedParlerResponse {
 
     @JsonProperty("last")

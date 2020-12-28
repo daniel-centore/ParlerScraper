@@ -4,6 +4,12 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Used for deserializing a paged response containing posts. This can come from, e.g., a hashtag search or a profile
+ * query.
+ *
+ * @author Daniel Centore
+ */
 public class PagedParlerPosts extends PagedParlerResponse {
 
     @JsonProperty("badge")

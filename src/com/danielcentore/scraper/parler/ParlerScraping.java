@@ -9,6 +9,11 @@ import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
 import com.danielcentore.scraper.parler.db.ScraperDb;
 
+/**
+ * Handles the primary logic behind scraping
+ *
+ * @author Daniel Centore
+ */
 public class ParlerScraping {
 
     ScraperDb db;

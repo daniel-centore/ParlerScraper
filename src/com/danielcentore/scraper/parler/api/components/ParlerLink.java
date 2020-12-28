@@ -7,6 +7,13 @@ import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Represents a link which was used in at least one {@link ParlerPost}.
+ * 
+ * Can be converted from Parler API JSON and to/from the database.
+ *
+ * @author Daniel Centore
+ */
 @Entity
 @Table(name = "links")
 public class ParlerLink {

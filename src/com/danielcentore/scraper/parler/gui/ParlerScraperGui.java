@@ -8,8 +8,11 @@ package com.danielcentore.scraper.parler.gui;
 /**
  * !!!!!! ONLY EDIT THIS FILE IN NETBEANS !!!!!!
  * 
- * We use Netbeans for the Gui, but Eclipse for everything else.
- * The Netbeans project is not currently set up to compile correctly.
+ * This is the GUI for the application. We use Netbeans for editing the GUI but Eclipse for everything else.
+ * 
+ * This application is not currently expected to compile correctly in Netbeans. Ignore the errors.
+ * 
+ * @author Daniel Centore
  */
 public class ParlerScraperGui extends javax.swing.JFrame {
 

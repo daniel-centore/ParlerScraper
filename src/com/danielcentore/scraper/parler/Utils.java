@@ -6,8 +6,8 @@ public class Utils {
 
     /**
      * Converts numbers provided by the Parler API to regular integers
-     * @param number e.g. "3.5m"
-     * @return
+     * @param parler number, e.g. "3.5m"
+     * @return regular number, e.g. 3500000
      */
     public static Long deparlify(String number) {
         if (number == null || number.isEmpty()) {

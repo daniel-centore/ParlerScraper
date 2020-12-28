@@ -4,6 +4,11 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Used for deserializing a paged response containing only users (e.g. followers, following, ...)
+ *
+ * @author Daniel Centore
+ */
 public class PagedParlerUsers extends PagedParlerResponse {
 
     List<ParlerUser> users;

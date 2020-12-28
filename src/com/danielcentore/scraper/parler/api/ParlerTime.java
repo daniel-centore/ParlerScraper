@@ -7,6 +7,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
+/**
+ * Represents a timestamp from Parler. These comprise an ISO8601 UTC timestamp along with a poorly understood extra integer
+ *
+ * @author Daniel Centore
+ */
 public class ParlerTime {
 
     final static DateFormat ISO8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");

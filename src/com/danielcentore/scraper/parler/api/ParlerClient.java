@@ -18,8 +18,13 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
+/**
+ * Handles communication with the Parler API
+ *
+ * @author Daniel Centore
+ */
 public class ParlerClient {
-    
+
     public static final File CREDENTIALS = new File("./credentials.txt");
 
     public static String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -81,7 +86,7 @@ public class ParlerClient {
             if (updated) {
                 System.out.println("Rewrote credentials: ");
                 System.out.println("MST: " + this.mst);
-                System.out.println("JST: " + this.jst); 
+                System.out.println("JST: " + this.jst);
                 FileWriter fileWriter = new FileWriter(CREDENTIALS, false);
                 fileWriter.write(this.mst + "\n" + this.jst);
                 fileWriter.close();
@@ -178,8 +183,7 @@ public class ParlerClient {
     public Response fetchPagedUserResponse(String referrer, String endpointBase, ParlerUser user, ParlerTime start) {
         String eParlerId = user.getUrlEncodedParlerId();
 
-        // The limit seems to be ignored. The web version always sets it to 10 so we do
-        // too.
+        // The limit seems to be ignored. The web version always sets it to 10 so we do too.
         String endpoint = String.format("%s?id=%s&limit=10", endpointBase, eParlerId);
         if (start != null) {
             endpoint += "&startkey=" + start.toParlerTimestamp();
@@ -198,21 +202,13 @@ public class ParlerClient {
         }
         String eHashtag = urlencode(hashtag);
 
-        // The limit seems to be ignored. The web version always sets it to 10 so we do
-        // too.
+        // The limit seems to be ignored. The web version always sets it to 10 so we do too.
         String endpoint = String.format("v1/post/hashtag?tag=%s&limit=10", eHashtag);
         if (start != null) {
             endpoint += "&startkey=" + start.toParlerTimestamp();
         }
 
         Response response = issueRequest("search?hashtag=" + hashtag, endpoint);
-
-        //	try {
-        //	    System.out.println(response.body().string());
-        //	} catch (IOException e1) {
-        //	    // TODO Auto-generated catch block
-        //	    e1.printStackTrace();
-        //	}
 
         try {
             return mapper.readValue(response.body().byteStream(), PagedParlerPosts.class);
@@ -233,10 +229,6 @@ public class ParlerClient {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-    }
-
-    enum ParlerReferrer {
-        USER_POSTS, POST_PERMALINK, HASHTAG
     }
 
 }
