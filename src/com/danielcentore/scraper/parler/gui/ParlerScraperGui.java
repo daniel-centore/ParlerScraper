@@ -68,7 +68,6 @@ public class ParlerScraperGui extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
-        idkBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Parler Scraper");
@@ -110,10 +109,12 @@ public class ParlerScraperGui extends javax.swing.JFrame {
 
         endDateField.setText("2020-12-25");
 
+        textAreaScroll.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         textAreaScroll.setEnabled(false);
 
         console.setEditable(false);
         console.setColumns(20);
+        console.setLineWrap(true);
         console.setRows(5);
         textAreaScroll.setViewportView(console);
 
@@ -145,14 +146,6 @@ public class ParlerScraperGui extends javax.swing.JFrame {
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
         jScrollPane2.setViewportView(jTextArea1);
-
-        idkBtn.setText("idk");
-        idkBtn.setToolTipText("This button is for testing during development. Don't click it.");
-        idkBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                idkBtnActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -207,9 +200,7 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(startBtn)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(stopBtn)
-                                .addGap(16, 16, 16)
-                                .addComponent(idkBtn))
+                                .addComponent(stopBtn))
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 379, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(textAreaScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
@@ -250,8 +241,7 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel6)
                                     .addComponent(startBtn)
-                                    .addComponent(stopBtn)
-                                    .addComponent(idkBtn))
+                                    .addComponent(stopBtn))
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -290,10 +280,6 @@ public class ParlerScraperGui extends javax.swing.JFrame {
         main.stopPostScrapeBtn();
     }//GEN-LAST:event_stopBtnActionPerformed
 
-    private void idkBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_idkBtnActionPerformed
-        main.idkBtn();
-    }//GEN-LAST:event_idkBtnActionPerformed
-
     public void setRunning(boolean running) {
         this.jstArea.setEnabled(!running);
         this.mstArea.setEnabled(!running);
@@ -331,7 +317,6 @@ public class ParlerScraperGui extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextArea console;
     private javax.swing.JTextField endDateField;
-    private javax.swing.JButton idkBtn;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;

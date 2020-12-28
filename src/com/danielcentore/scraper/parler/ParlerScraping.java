@@ -8,6 +8,7 @@ import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
 import com.danielcentore.scraper.parler.db.ScraperDb;
+import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 
 /**
  * Handles the primary logic behind scraping
@@ -16,40 +17,59 @@ import com.danielcentore.scraper.parler.db.ScraperDb;
  */
 public class ParlerScraping {
 
-    ScraperDb db;
-    ParlerClient client;
-    ParlerTime startTime;
-    ParlerTime endTime;
+    private ScraperDb db;
+    private ParlerClient client;
+    ParlerScraperGui gui;
+    
+    private volatile boolean stopRequested = false;
 
-    public ParlerScraping(ScraperDb db, ParlerClient client, ParlerTime startTime, ParlerTime endTime) {
+    public ParlerScraping(ScraperDb db, ParlerClient client, ParlerScraperGui gui) {
         this.db = db;
         this.client = client;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.gui = gui;
     }
 
-    public void scrape() {
+    public void scrape(ParlerTime startTime, ParlerTime endTime) {
+        stopRequested = false;
 
-        fetchSeedProfiles();
+//        fetchSeedProfiles();
 
-        boolean running = true;
-
-        while (running) {
-            // Fetch a random user's followers, following, and posts
-            ParlerUser randomUser = getWeightedRandomUser();
-            PagedParlerPosts userPosts = client.fetchPagedPosts(randomUser, getRandomUserTime(randomUser));
-            db.storePagedPosts(userPosts);
-            PagedParlerUsers following = client.fetchFollowing(randomUser, getRandomUserTime(randomUser));
-            db.storePagedUsers(following);
-            PagedParlerUsers followers = client.fetchFollowers(randomUser, getRandomUserTime(randomUser));
-            db.storePagedUsers(followers);
-
-            // Fetch posts from a random hashtag
-            String randomHashtag = getWeightedRandomHashtag();
-            PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(randomHashtag,
-                    getRandomHashtagTime(randomHashtag));
-            db.storePagedPosts(hashtagPosts);
+        while (!stopRequested) {
+            //            // Fetch a random user's followers, following, and posts
+            //            ParlerUser randomUser = getWeightedRandomUser();
+            //            PagedParlerPosts userPosts = client.fetchPagedPosts(randomUser, getRandomUserTime(randomUser));
+            //            db.storePagedPosts(userPosts);
+            //            PagedParlerUsers following = client.fetchFollowing(randomUser, getRandomUserTime(randomUser));
+            //            db.storePagedUsers(following);
+            //            PagedParlerUsers followers = client.fetchFollowers(randomUser, getRandomUserTime(randomUser));
+            //            db.storePagedUsers(followers);
+            //
+            //            // Fetch posts from a random hashtag
+            //            String randomHashtag = getWeightedRandomHashtag();
+            //            PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(randomHashtag,
+            //                    getRandomHashtagTime(randomHashtag));
+            //            db.storePagedPosts(hashtagPosts);
+            
+            gui.println("Task 1...");
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+            }
+            
+            if (stopRequested) {
+                return;
+            }
+            
+            gui.println("Task 2....");
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+            }
         }
+    }
+    
+    public void stop() {
+        this.stopRequested = true;
     }
 
     private void fetchSeedProfiles() {

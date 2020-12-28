@@ -91,8 +91,6 @@
                               <Component id="startBtn" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="stopBtn" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
-                              <Component id="idkBtn" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="jScrollPane1" min="-2" pref="379" max="-2" attributes="0"/>
                       </Group>
@@ -144,7 +142,6 @@
                                   <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="startBtn" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="stopBtn" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="idkBtn" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
@@ -256,6 +253,7 @@
     </Component>
     <Container class="javax.swing.JScrollPane" name="textAreaScroll">
       <Properties>
+        <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
       <AuxValues>
@@ -268,6 +266,7 @@
           <Properties>
             <Property name="editable" type="boolean" value="false"/>
             <Property name="columns" type="int" value="20"/>
+            <Property name="lineWrap" type="boolean" value="true"/>
             <Property name="rows" type="int" value="5"/>
           </Properties>
         </Component>
@@ -354,14 +353,5 @@
         </Component>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JButton" name="idkBtn">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="idk"/>
-        <Property name="toolTipText" type="java.lang.String" value="This button is for testing during development. Don&apos;t click it."/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="idkBtnActionPerformed"/>
-      </Events>
-    </Component>
   </SubComponents>
 </Form>

@@ -8,11 +8,12 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 /**
- * Represents a timestamp from Parler. These comprise an ISO8601 UTC timestamp along with a poorly understood extra integer
+ * Represents a timestamp from Parler. These comprise an ISO8601 UTC timestamp along with a poorly understood extra
+ * integer
  *
  * @author Daniel Centore
  */
-public class ParlerTime {
+public class ParlerTime implements Comparable<ParlerTime> {
 
     final static DateFormat ISO8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
@@ -30,6 +31,18 @@ public class ParlerTime {
      * within the same millisecond. It is unclear if it is even utilized at all.
      */
     final int extended;
+
+    public Calendar toCalendar() {
+        Calendar calendar = new GregorianCalendar();
+        calendar.set(year, month - 1, day, hour, min, sec);
+        calendar.set(Calendar.MILLISECOND, ms);
+        return calendar;
+    }
+
+    public String toParlerTimestamp() {
+        Calendar calendar = toCalendar();
+        return ISO8601_FORMAT.format(calendar.getTime()) + "_" + extended;
+    }
 
     /**
      * 
@@ -57,6 +70,27 @@ public class ParlerTime {
             throw new RuntimeException("Timestamp was neither a unix time nor a Parler Extended timestamp");
         }
 
+        return fromCalendar(calendar, extended);
+    }
+
+    public static ParlerTime fromYyyyMmDd(String date) {
+        try {
+            String[] split = date.split("-");
+            return new ParlerTime(
+                    Integer.parseInt(split[0]),
+                    Integer.parseInt(split[1]),
+                    Integer.parseInt(split[2]));
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static ParlerTime fromCalendar(Calendar calendar) {
+        return fromCalendar(calendar, "0");
+    }
+
+    public static ParlerTime fromCalendar(Calendar calendar, String extended) {
         return new ParlerTime(
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH) + 1,
@@ -65,14 +99,7 @@ public class ParlerTime {
                 calendar.get(Calendar.MINUTE),
                 calendar.get(Calendar.SECOND),
                 calendar.get(Calendar.MILLISECOND),
-                Integer.parseInt(extended));
-    }
-
-    public String toParlerTimestamp() {
-        Calendar calendar = new GregorianCalendar();
-        calendar.set(year, month - 1, day, hour, min, sec);
-        calendar.set(Calendar.MILLISECOND, ms);
-        return ISO8601_FORMAT.format(calendar.getTime()) + "_" + extended;
+                extended == null ? null : Integer.parseInt(extended));
     }
 
     public ParlerTime(int year, int month, int day, int hour, int min, int sec, int ms, int extended) {
@@ -128,6 +155,15 @@ public class ParlerTime {
         this.sec = 0;
         this.ms = 0;
         this.extended = 0;
+    }
+
+    @Override
+    public int compareTo(ParlerTime o) {
+        int result = this.toCalendar().compareTo(o.toCalendar());
+        if (result == 0) {
+            return Integer.compare(this.extended, o.extended);
+        }
+        return result;
     }
 
 }
