@@ -79,17 +79,17 @@ public class ParlerScraping {
         gui.println("### Scraping Randomly ###");
         gui.println("#########################");
         while (!stopRequested) {
+            for (int i = 0; i < USERS_PER_HASHTAG; ++i) {
+                ParlerUser user = getWeightedRandomUser();
+                scrapeUser(user, false);
+            }
+            
             ParlerHashtag hashtag = getWeightedRandomHashtag();
             String htDebug = String.format("encounters=%,d", hashtag.getEncounters());
             if (hashtag.getTotalPosts() != null) {
                 htDebug += String.format("; posts=%d", hashtag.getTotalPosts());
             }
             scrapeHashtag(hashtag.getHashtag(), false, htDebug);
-
-            for (int i = 0; i < USERS_PER_HASHTAG; ++i) {
-                ParlerUser user = getWeightedRandomUser();
-                scrapeUser(user, false);
-            }
         }
 
         //        while (!stopRequested) {
