@@ -39,5 +39,13 @@ public class PUtils {
             throw new RuntimeException("INVALID PARLER NUMBER FORMAT: " + number, e);
         }
     }
+    
+    public static void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

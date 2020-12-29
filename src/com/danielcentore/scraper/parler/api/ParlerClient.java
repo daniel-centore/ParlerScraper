@@ -8,10 +8,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
+import com.danielcentore.scraper.parler.PUtils;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
+import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,21 +37,47 @@ public class ParlerClient {
     public static String API_DOMAIN = "https://api.parler.com";
 
     private static ObjectMapper mapper = new ObjectMapper();
-    
+    private static Random random = new Random();
+
     private List<ICookiesListener> cookiesListeners = new ArrayList<>();
 
     private String mst;
     private String jst;
 
-    public ParlerClient(String mst, String jst) {
+    private ParlerScraperGui gui;
+
+    public ParlerClient(String mst, String jst, ParlerScraperGui gui) {
         this.mst = mst;
         this.jst = jst;
+
+        this.gui = gui;
     }
 
     public Response issueRequest(String referrer, String endpoint) {
 
-        // TODO: AUTOMATIC RETRIES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        int attempt = 0;
+        long waitTime = 2000 + random.nextInt(1000);
 
+        while (true) {
+            try {
+                Response result = issueRequestNoRetry(referrer, endpoint);
+                
+                gui.println("> Pausing " + waitTime + "ms...");
+                PUtils.sleep(waitTime);
+                
+                return result;
+            } catch (Exception e) {
+                e.printStackTrace();
+                attempt++;
+                long retryTime = waitTime * (long) Math.pow(2, Math.min(attempt, 5));
+                gui.println("> API REQUEST ATTEMPT " + attempt + " FAILED: " + e.getLocalizedMessage());
+                gui.println("> Retrying in " + retryTime + "ms...");
+                PUtils.sleep(retryTime);
+            }
+        }
+    }
+
+    private Response issueRequestNoRetry(String referrer, String endpoint) throws IOException {
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder()
@@ -60,39 +89,34 @@ public class ParlerClient {
                 .url(API_DOMAIN + "/" + endpoint)
                 .build();
 
-        try {
-            Response response = client.newCall(request).execute();
+        Response response = client.newCall(request).execute();
 
-            boolean updated = false;
-            for (String header : response.headers("set-cookie")) {
-                String[] components = header.split(";");
-                String mainComponent = components[0];
+        boolean updated = false;
+        for (String header : response.headers("set-cookie")) {
+            String[] components = header.split(";");
+            String mainComponent = components[0];
 
-                String[] split = mainComponent.split("=");
-                String name = split[0].trim();
-                String value = split[1].trim();
+            String[] split = mainComponent.split("=");
+            String name = split[0].trim();
+            String value = split[1].trim();
 
-                if (name.equals("jst") && !this.jst.equals(value)) {
-                    this.jst = value;
-                    updated = true;
-                } else if (name.equals("mst") && !this.mst.equals(value)) {
-                    this.mst = value;
-                    updated = true;
-                }
+            if (name.equals("jst") && !this.jst.equals(value)) {
+                this.jst = value;
+                updated = true;
+            } else if (name.equals("mst") && !this.mst.equals(value)) {
+                this.mst = value;
+                updated = true;
             }
-
-            // Rewrite credentials if necessary
-            if (updated) {
-                for (ICookiesListener listener : this.cookiesListeners) {
-                    listener.cookiesUpdated(mst, jst);
-                }
-            }
-
-            return response;
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        return null;
+
+        // Rewrite credentials if necessary
+        if (updated) {
+            for (ICookiesListener listener : this.cookiesListeners) {
+                listener.cookiesUpdated(mst, jst);
+            }
+        }
+
+        return response;
     }
 
     public ParlerUser fetchProfile(String username) {
@@ -226,7 +250,7 @@ public class ParlerClient {
             throw new RuntimeException(e);
         }
     }
-    
+
     public void addCookieListener(ICookiesListener listener) {
         cookiesListeners.add(listener);
     }

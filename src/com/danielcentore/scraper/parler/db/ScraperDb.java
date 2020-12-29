@@ -10,12 +10,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.hibernate.IdentifierLoadAccess;
 import org.hibernate.MultiIdentifierLoadAccess;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
+import com.danielcentore.scraper.parler.Main;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
 import com.danielcentore.scraper.parler.api.components.ParlerHashtag;
@@ -30,6 +30,8 @@ import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
  * @author Daniel Centore
  */
 public class ScraperDb {
+
+    public static final String TAB = Main.TAB;
 
     private Session session;
     private ParlerScraperGui gui;
@@ -166,10 +168,7 @@ public class ScraperDb {
     }
 
     public void storeHashtagTotalPostCount(String hashtag, Long totalPosts) {
-        hashtag = hashtag.toLowerCase();
-
-        IdentifierLoadAccess<ParlerHashtag> byId = session.byId(ParlerHashtag.class);
-        ParlerHashtag parlerHashtag = byId.load(hashtag);
+        ParlerHashtag parlerHashtag = getParlerHashtag(hashtag);
         if (parlerHashtag == null) {
             parlerHashtag = new ParlerHashtag(hashtag);
         }
@@ -177,6 +176,22 @@ public class ScraperDb {
         beginTransaction();
         session.saveOrUpdate(parlerHashtag);
         endTransaction();
+    }
+
+    public ParlerHashtag getParlerHashtag(String hashtag) {
+        return session.byId(ParlerHashtag.class).load(hashtag.toLowerCase());
+    }
+
+    public ParlerUser getParlerUserByUsername(String username) {
+        @SuppressWarnings("unchecked")
+        List<ParlerUser> result = session.createQuery("FROM ParlerUser U WHERE U.username = :username")
+                .setParameter("username", username)
+                .setMaxResults(1)
+                .getResultList();
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
     }
 
     public void storeUser(ParlerUser user) {
@@ -232,10 +247,32 @@ public class ScraperDb {
 
     public void endTransaction() {
         session.getTransaction().commit();
+        updateStatusArea();
+    }
 
-        long totalRows = (long) session.createQuery("SELECT count(*) FROM ParlerUser U WHERE U.score > 0")
+    public void updateStatusArea() {
+        long totalUsers = (long) session.createQuery("SELECT count(*) FROM ParlerUser")
                 .getSingleResult();
-        gui.println("Scores> 0: " + totalRows);
+        long scoresGreaterZero = (long) session.createQuery("SELECT count(*) FROM ParlerUser U WHERE U.score > 0")
+                .getSingleResult();
+        long totalPosts = (long) session.createQuery("SELECT count(*) FROM ParlerPost")
+                .getSingleResult();
+        long totalHashtags = (long) session.createQuery("SELECT count(*) FROM ParlerHashtag")
+                .getSingleResult();
+
+        String text = String.format(
+                "Total Posts: %d\n"
+                        + "Total Users: %d\n"
+                        + TAB + "Scores >0: %d\n"
+                        + TAB + "Scores \u22640: %d\n"
+                        + "Total Hashtags: %d\n",
+                totalPosts,
+                totalUsers,
+                scoresGreaterZero,
+                totalUsers - scoresGreaterZero,
+                totalHashtags);
+
+        gui.setStatusArea(text);
     }
 
 }

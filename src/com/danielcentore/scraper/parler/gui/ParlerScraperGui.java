@@ -7,6 +7,7 @@ package com.danielcentore.scraper.parler.gui;
 
 import com.danielcentore.scraper.parler.Main;
 import javax.swing.BoundedRangeModel;
+import javax.swing.JScrollBar;
 
 /**
  * !!!!!! ONLY EDIT THIS FILE IN NETBEANS !!!!!!
@@ -67,7 +68,7 @@ public class ParlerScraperGui extends javax.swing.JFrame {
         jLabel19 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        statusArea = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Parler Scraper");
@@ -142,10 +143,10 @@ public class ParlerScraperGui extends javax.swing.JFrame {
 
         jLabel19.setText("d) Copy these cookie \"Content\" fields:");
 
-        jTextArea1.setEditable(false);
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane2.setViewportView(jTextArea1);
+        statusArea.setEditable(false);
+        statusArea.setColumns(20);
+        statusArea.setRows(5);
+        jScrollPane2.setViewportView(statusArea);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -294,11 +295,12 @@ public class ParlerScraperGui extends javax.swing.JFrame {
     }
     
     public void print(String text) {
-        BoundedRangeModel model = this.textAreaScroll.getVerticalScrollBar().getModel();
+        JScrollBar vertical = textAreaScroll.getVerticalScrollBar();
+        BoundedRangeModel model = vertical.getModel();
         int extent = model.getExtent();
         int maximum = model.getMaximum();
         int value = model.getValue();
-        int EPSILON = 5;
+        int EPSILON = 50;
         
         boolean atBottom = value + extent >= maximum - EPSILON;
         
@@ -312,6 +314,10 @@ public class ParlerScraperGui extends javax.swing.JFrame {
     public void setCookies(String mst, String jst) {
         this.jstArea.setText(jst.trim());
         this.mstArea.setText(mst.trim());
+    }
+    
+    public void setStatusArea(String text) {
+        this.statusArea.setText(text);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -333,12 +339,12 @@ public class ParlerScraperGui extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
-    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextArea jstArea;
     private javax.swing.JTextArea mstArea;
     private javax.swing.JTextArea seedArea;
     private javax.swing.JButton startBtn;
     private javax.swing.JTextField startDateField;
+    private javax.swing.JTextArea statusArea;
     private javax.swing.JButton stopBtn;
     private javax.swing.JScrollPane textAreaScroll;
     // End of variables declaration//GEN-END:variables

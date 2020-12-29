@@ -2,9 +2,10 @@ package com.danielcentore.scraper.parler.api.components;
 
 import java.util.List;
 
+import javax.persistence.Transient;
+
 import com.danielcentore.scraper.parler.PUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.squareup.okhttp.internal.Util;
 
 
 /**
@@ -45,6 +46,11 @@ public class PagedParlerPosts extends PagedParlerResponse {
             @JsonProperty("totalPosts") String totalPosts) {
         this.pendingFollowers = PUtils.deparlify(pendingFollowers);
         this.totalPosts = PUtils.deparlify(totalPosts);
+    }
+    
+    @Transient
+    public int getPostCount() {
+        return posts.size() + postReferences.size();
     }
 
     public Integer getBadge() {

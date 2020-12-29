@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,8 +16,6 @@ import javax.swing.UIManager;
 import com.danielcentore.scraper.parler.api.ICookiesListener;
 import com.danielcentore.scraper.parler.api.ParlerClient;
 import com.danielcentore.scraper.parler.api.ParlerTime;
-import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
-import com.danielcentore.scraper.parler.api.components.ParlerUser;
 import com.danielcentore.scraper.parler.db.ScraperDb;
 import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 
@@ -44,11 +44,12 @@ public class Main implements ICookiesListener {
         gui = new ParlerScraperGui(this, mst, jst);
         gui.setEnabled(false);
         gui.setVisible(true);
-        gui.println("Initializing database...");
+        gui.println("Initializing local database...");
 
         scraperDb = new ScraperDb(gui);
+        scraperDb.updateStatusArea();
 
-        client = new ParlerClient(mst, jst);
+        client = new ParlerClient(mst, jst, gui);
         client.addCookieListener(this);
 
         scraper = new ParlerScraping(scraperDb, client, gui);
@@ -60,7 +61,7 @@ public class Main implements ICookiesListener {
 
     @Override
     public void cookiesUpdated(String mst, String jst) {
-        gui.println("Cookies updated from server");
+        gui.println("> Cookies updated from server");
         gui.setCookies(mst, jst);
         updateCookiesFile(mst, jst);
     }
@@ -71,7 +72,7 @@ public class Main implements ICookiesListener {
             fileWriter.write(mst + "\n" + jst);
             fileWriter.close();
         } catch (IOException e) {
-            gui.println("ERROR writing cookies to file: " + e.getLocalizedMessage());
+            gui.println("> ERROR writing cookies to file: " + e.getLocalizedMessage());
             e.printStackTrace();
         }
     }
@@ -86,7 +87,7 @@ public class Main implements ICookiesListener {
         ParlerTime endTime = ParlerTime.fromYyyyMmDd(endDate);
 
         if (startTime == null || endTime == null) {
-            gui.println("ERROR: Invalid date format");
+            gui.println("> ERROR: Invalid date format");
             return;
         }
 
@@ -105,20 +106,32 @@ public class Main implements ICookiesListener {
         final ParlerTime finalEndTime = endTime;
         Runnable r = new Runnable() {
             public void run() {
-                gui.println("== Starting Scraping ==");
+                gui.println("== Scraping: STARTED ==");
                 gui.setRunning(true);
 
-                scraper.scrape(finalStartTime, finalEndTime);
+                scraper.scrape(finalStartTime, finalEndTime, getSeeds(seeds));
 
-                gui.println("== Scraping Stopped ==");
+                gui.println("== Scraping: STOPPED ==");
                 gui.setRunning(false);
             }
         };
         executor.submit(r);
     }
+    
+    private List<String> getSeeds(String seeds) {
+        String[] split = seeds.split("\n");
+        List<String> result = new ArrayList<>();
+        for (String s : split) {
+            String trimmed = s.trim();
+            if (!trimmed.isEmpty()) {
+                result.add(trimmed);
+            }
+        }
+        return result;
+    }
 
     public void stopPostScrapeBtn() {
-        gui.println("Finishing up, one moment...");
+        gui.println("> Finishing up, one moment...");
         scraper.stop();
     }
 

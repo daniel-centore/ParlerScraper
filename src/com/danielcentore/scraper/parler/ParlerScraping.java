@@ -1,10 +1,14 @@
 package com.danielcentore.scraper.parler;
 
+import java.util.List;
+
 import org.hibernate.cfg.NotYetImplementedException;
 
 import com.danielcentore.scraper.parler.api.ParlerClient;
 import com.danielcentore.scraper.parler.api.ParlerTime;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
+import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
+import com.danielcentore.scraper.parler.api.components.ParlerHashtag;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
 import com.danielcentore.scraper.parler.db.ScraperDb;
 import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
@@ -15,6 +19,8 @@ import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
  * @author Daniel Centore
  */
 public class ParlerScraping {
+
+    private static final String TAB = Main.TAB;
 
     private ScraperDb db;
     private ParlerClient client;
@@ -28,61 +34,124 @@ public class ParlerScraping {
         this.gui = gui;
     }
 
-    public void scrape(ParlerTime startTime, ParlerTime endTime) {
-        String hashtag = "maga";
-        gui.println("Fetching #" + hashtag + "...");
-        PagedParlerPosts hastagPosts = client.fetchPagedHashtag(hashtag);
-        gui.println("Storing...");
-        db.storePagedPosts(hastagPosts);
-//        gui.println("Storing2...");
-//        db.storeHashtagTotalPostCount(hashtag, hastagPosts.getTotalPosts());
-        gui.println("Done storing");
+    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds) {
+        stopRequested = false;
 
-        //        stopRequested = false;
-        //
-        //        // fetchSeedProfiles();
-        //        // fetchSeedHashtags();
-        //
-        //        while (!stopRequested) {
-        //            //            // Fetch a random user's followers, following, and posts
-        //            //            ParlerUser randomUser = getWeightedRandomUser();
-        //            //            PagedParlerPosts userPosts = client.fetchPagedPosts(randomUser, getRandomUserTime(randomUser));
-        //            //            db.storePagedPosts(userPosts);
-        //            //            PagedParlerUsers following = client.fetchFollowing(randomUser, getRandomUserTime(randomUser));
-        //            //            db.storePagedUsers(following);
-        //            //            PagedParlerUsers followers = client.fetchFollowers(randomUser, getRandomUserTime(randomUser));
-        //            //            db.storePagedUsers(followers);
-        //            //
-        //            //            // Fetch posts from a random hashtag
-        //            //            String randomHashtag = getWeightedRandomHashtag();
-        //            //            PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(randomHashtag,
-        //            //                    getRandomHashtagTime(randomHashtag));
-        //            //            db.storePagedPosts(hashtagPosts);
-        //
-        //            gui.println("Task 1...");
-        //            try {
-        //                Thread.sleep(2000);
-        //            } catch (InterruptedException e) {
-        //            }
-        //
-        //            if (stopRequested) {
-        //                return;
-        //            }
-        //
-        //            gui.println("Task 2....");
-        //            try {
-        //                Thread.sleep(2000);
-        //            } catch (InterruptedException e) {
-        //            }
-        //        }
+        gui.println("######################");
+        gui.println("### Scraping Seeds ###");
+        gui.println("######################");
+        for (String seed : seeds) {
+            if (stopRequested) {
+                return;
+            }
+
+            seed = seed.trim();
+            if (seed.isEmpty()) {
+                continue;
+            } else if (seed.startsWith("#")) {
+                scrapeHashtag(seed.substring(1), true);
+            } else {
+                scrapeUsername(seed, true);
+            }
+        }
+
+        gui.println("#########################");
+        gui.println("### Scraping Randomly ###");
+        gui.println("#########################");
+        while (!stopRequested) {
+            ParlerUser user = getWeightedRandomUser();
+            scrapeUser(user, false);
+        }
     }
 
-    public void stop() {
-        this.stopRequested = true;
+    private void scrapeHashtag(String hashtag, boolean skipIfExists) {
+        gui.println("Scraping #" + hashtag);
+
+        if (skipIfExists) {
+            ParlerHashtag parlerHashtag = db.getParlerHashtag(hashtag);
+            if (parlerHashtag != null && parlerHashtag.getTotalPosts() != null) {
+                gui.println(TAB + "Already exists in local DB; skipping");
+                return;
+            }
+        }
+
+        gui.println(TAB + "Fetching from API...");
+        // TODO: Random time!!!!!!!!!!!!
+        PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(hashtag);
+
+        gui.println(TAB + "Storing in local DB...");
+        db.storePagedPosts(hashtagPosts);
+        db.storeHashtagTotalPostCount(hashtag, hashtagPosts.getTotalPosts());
+
+        gui.println(TAB + "Done.");
     }
 
-    private void fetchSeedProfiles() {
-        throw new NotYetImplementedException();
+    private void scrapeUser(ParlerUser user, boolean skipIfExists) {
+        scrapeUsername(user.getUsername(), skipIfExists);
+    }
+
+    private void scrapeUsername(String username, boolean skipIfExists) {
+        gui.println("Scraping @" + username);
+
+        ParlerUser profile = db.getParlerUserByUsername(username);
+        if (skipIfExists) {
+            if (profile != null && profile.isFullyScanned()) {
+                gui.println(TAB + "Already exists in local DB; skipping");
+                return;
+            }
+        }
+
+        if (stopRequested) {
+            return;
+        }
+
+        if (profile == null || !profile.isFullyScanned()) {
+            gui.println(TAB + "Fetching profile from API...");
+            profile = client.fetchProfile(username);
+
+            gui.println(TAB + "Storing profile in local DB...");
+            db.storeUser(profile);
+        } else {
+            gui.println(TAB + "Using fully scanned profile from local DB");
+        }
+
+        if (stopRequested) {
+            return;
+        }
+
+        {
+            gui.println(TAB + "Fetching posts from API...");
+            PagedParlerPosts pagedPosts = client.fetchPagedPosts(profile, getRandomUserTime(profile));
+            int postCount = pagedPosts.getPostCount();
+            gui.println(TAB + "Storing " + postCount + " posts in local DB...");
+            db.storePagedPosts(pagedPosts);
+        }
+
+        if (stopRequested) {
+            return;
+        }
+
+        {
+            gui.println(TAB + "Fetching followees from API...");
+            PagedParlerUsers pagedFollowing = client.fetchFollowers(profile, getRandomUserTime(profile));
+            int followingCount = pagedFollowing.getUsers().size();
+            gui.println(TAB + "Storing " + followingCount + " followees in local DB...");
+            db.storePagedUsers(pagedFollowing);
+        }
+
+        if (stopRequested) {
+            return;
+        }
+
+        {
+            gui.println(TAB + "Fetching followers from API...");
+            PagedParlerUsers pagedFollowers = client.fetchFollowers(profile, getRandomUserTime(profile));
+            int followersCount = pagedFollowers.getUsers().size();
+            gui.println(TAB + "Storing " + followersCount + " followers in local DB...");
+            db.storePagedUsers(pagedFollowers);
+        }
+
+        gui.println(TAB + "Done.");
     }
 
     private ParlerUser getWeightedRandomUser() {
@@ -91,7 +160,7 @@ public class ParlerScraping {
     }
 
     private ParlerTime getRandomUserTime(ParlerUser user) {
-        throw new NotYetImplementedException();
+        return null; // TODO!!!!!!!!!!!
     }
 
     private String getWeightedRandomHashtag() {
@@ -102,4 +171,7 @@ public class ParlerScraping {
         throw new NotYetImplementedException();
     }
 
+    public void stop() {
+        this.stopRequested = true;
+    }
 }
