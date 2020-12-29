@@ -4,9 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.distribution.EnumeratedDistribution;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.util.Pair;
-import org.hibernate.cache.spi.support.AbstractReadWriteAccess.Item;
-import org.hibernate.cfg.NotYetImplementedException;
 
 import com.danielcentore.scraper.parler.api.ParlerClient;
 import com.danielcentore.scraper.parler.api.ParlerTime;
@@ -54,7 +53,7 @@ public class ParlerScraping {
             if (seed.isEmpty()) {
                 continue;
             } else if (seed.startsWith("#")) {
-                scrapeHashtag(seed.substring(1), true);
+                scrapeHashtag(seed.substring(1), true, "seed");
             } else {
                 scrapeUsername(seed, true, "seed");
             }
@@ -64,15 +63,22 @@ public class ParlerScraping {
         gui.println("### Scraping Randomly ###");
         gui.println("#########################");
         while (!stopRequested) {
+            ParlerHashtag hashtag = getWeightedRandomHashtag();
+            String htDebug = String.format("encounters=%,d", hashtag.getEncounters());
+            if (hashtag.getTotalPosts() != null) {
+                htDebug += String.format("; posts=%d", hashtag.getTotalPosts());
+            }
+            scrapeHashtag(hashtag.getHashtag(), false, htDebug);
+
             ParlerUser user = getWeightedRandomUser();
             scrapeUser(user, false);
         }
     }
 
-    private void scrapeHashtag(String hashtag, boolean skipIfExists) {
+    private void scrapeHashtag(String hashtag, boolean skipIfExists, String debug) {
         hashtag = hashtag.toLowerCase();
 
-        gui.println("Scraping #" + hashtag);
+        gui.println("Scraping #" + hashtag + " (" + debug + ")");
 
         if (skipIfExists) {
             ParlerHashtag parlerHashtag = db.getParlerHashtag(hashtag);
@@ -95,7 +101,7 @@ public class ParlerScraping {
     }
 
     private void scrapeUser(ParlerUser user, boolean skipIfExists) {
-        scrapeUsername(user.getUsername(), skipIfExists, "score="+user.getScore());
+        scrapeUsername(user.getUsername(), skipIfExists, String.format("score=%,d", user.getScore()));
     }
 
     private void scrapeUsername(String username, boolean skipIfExists, String debugInfo) {
@@ -169,7 +175,7 @@ public class ParlerScraping {
     }
 
     private ParlerUser getWeightedRandomUser() {
-        List<ParlerUser> allNotWorthlessUsers = db.getAllNotWorthlessUsers();
+        List<ParlerUser> allNotWorthlessUsers = db.getAllPublicNotWorthlessUsers();
         List<Pair<ParlerUser, Double>> userWeights = allNotWorthlessUsers.stream()
                 .map(i -> new Pair<ParlerUser, Double>(i, weighUser(i)))
                 .collect(Collectors.toList());
@@ -185,8 +191,37 @@ public class ParlerScraping {
         return null; // TODO
     }
 
-    private String getWeightedRandomHashtag() {
-        throw new NotYetImplementedException();
+    private ParlerHashtag getWeightedRandomHashtag() {
+        List<ParlerHashtag> allHashtags = db.getAllHashtags();
+
+        SimpleRegression encountersToPosts = new SimpleRegression();
+        int nonNull = 0;
+        for (ParlerHashtag ht : allHashtags) {
+            if (ht.getTotalPosts() != null) {
+                nonNull++;
+                encountersToPosts.addData(ht.getEncounters(), ht.getTotalPosts());
+            }
+        }
+
+        final int nonNullF = nonNull;
+        List<Pair<ParlerHashtag, Double>> hashtagWeights = allHashtags.stream()
+                .map(ht -> new Pair<ParlerHashtag, Double>(ht, weighHashtag(ht, encountersToPosts, nonNullF)))
+                .filter(htp -> htp.getSecond() > Double.NEGATIVE_INFINITY)
+                .collect(Collectors.toList());
+        return new EnumeratedDistribution<>(hashtagWeights).sample();
+    }
+
+    private double weighHashtag(ParlerHashtag hashtag, SimpleRegression encountersToPosts, int nonNull) {
+        Long totalPosts = hashtag.getTotalPosts();
+        if (totalPosts == null) {
+            long encounters = hashtag.getEncounters();
+            if (nonNull > 0) {
+                totalPosts = (long) encountersToPosts.predict(encounters);
+            } else {
+                totalPosts = encounters;
+            }
+        }
+        return totalPosts <= 0 ? Double.NEGATIVE_INFINITY : Math.log(totalPosts);
     }
 
     public void stop() {

@@ -16,7 +16,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import com.danielcentore.scraper.parler.Main;
-import com.danielcentore.scraper.parler.api.ParlerTime;
 import com.danielcentore.scraper.parler.api.ScrapeType;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerResponse;
@@ -247,8 +246,13 @@ public class ScraperDb {
     }
 
     @SuppressWarnings("unchecked")
-    public List<ParlerUser> getAllNotWorthlessUsers() {
-        return session.createQuery("FROM ParlerUser U WHERE U.score > 0").getResultList();
+    public List<ParlerUser> getAllPublicNotWorthlessUsers() {
+        return session.createQuery("FROM ParlerUser U WHERE U.score > 0 AND U.privateAccount = 0").getResultList();
+    }
+    
+    @SuppressWarnings("unchecked")
+    public List<ParlerHashtag> getAllHashtags() {
+        return session.createQuery("FROM ParlerHashtag").getResultList();
     }
 
     public void beginTransaction() {
@@ -275,7 +279,9 @@ public class ScraperDb {
                         + "Total Users: %d\n"
                         + TAB + "Scores >0: %d\n"
                         + TAB + "Scores \u22640: %d\n"
-                        + "Total Hashtags: %d\n",
+                        + "Total Hashtags: %d\n"
+                        + "\n"
+                        + "Posts in date range: TODO\n",
                 totalPosts,
                 totalUsers,
                 scoresGreaterZero,

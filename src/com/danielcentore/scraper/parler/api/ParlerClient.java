@@ -57,14 +57,17 @@ public class ParlerClient {
     public String issueRequest(String referrer, String endpoint) {
 
         int attempt = 0;
-        long waitTime = 2000 + random.nextInt(1000);
+        long waitTime = 1500 + random.nextInt(1500);
+        
+        // 0.5% of the time we take a coffee break 
+        if (random.nextInt(1000) < 5) {
+            gui.println("> Pausing extra long this time");
+            waitTime = 30000 + random.nextInt(60000);
+        }
 
         while (true) {
             try {
                 Response result = issueRequestNoRetry(referrer, endpoint);
-
-                gui.println("> Pausing " + waitTime + "ms...");
-                PUtils.sleep(waitTime);
 
                 String json = result.body().string();
                 
@@ -72,14 +75,22 @@ public class ParlerClient {
                 if (message != null) {
                     gui.println("> API MESSAGE: " + message);
                     gui.println("Full json: " + json);
+                    gui.println("Endpoint: " + endpoint);
                     throw new RuntimeException("API Message");
                 }
+                
+                gui.println("> Pausing " + waitTime + "ms...");
+                PUtils.sleep(waitTime);
                 
                 return json;
             } catch (Exception e) {
                 e.printStackTrace();
                 attempt++;
-                long retryTime = waitTime * (long) Math.pow(2, Math.min(attempt, 5));
+                if (attempt >= 5) {
+                    gui.println("> Giving up :(");
+                    return null;
+                }
+                long retryTime = waitTime * (long) Math.pow(2, attempt);
                 gui.println("> API REQUEST ATTEMPT " + attempt + " FAILED: " + e.getLocalizedMessage());
                 gui.println("> Retrying in " + retryTime + "ms...");
                 PUtils.sleep(retryTime);
