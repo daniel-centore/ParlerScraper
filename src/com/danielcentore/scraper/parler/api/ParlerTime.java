@@ -48,6 +48,7 @@ public class ParlerTime implements Comparable<ParlerTime> {
 
     public Calendar toCalendar() {
         Calendar calendar = new GregorianCalendar();
+        calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         calendar.set(year, month - 1, day, hour, min, sec);
         calendar.set(Calendar.MILLISECOND, ms);
         return calendar;
@@ -84,6 +85,7 @@ public class ParlerTime implements Comparable<ParlerTime> {
 
         String extended = "0";
         Calendar calendar = new GregorianCalendar();
+        calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         if (split.length == 1) {
             try {
                 calendar.setTimeInMillis(Long.parseLong(parlerTimestamp));
@@ -128,6 +130,7 @@ public class ParlerTime implements Comparable<ParlerTime> {
 
     public static ParlerTime fromUnixTimestampMs(Long ms) {
         Calendar calendar = new GregorianCalendar();
+        calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         calendar.setTimeInMillis(ms);
         return fromCalendar(calendar, "0");
     }

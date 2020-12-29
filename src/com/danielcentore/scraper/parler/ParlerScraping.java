@@ -30,7 +30,7 @@ public class ParlerScraping {
 
     private static final RandomDataGenerator random = new RandomDataGenerator();
     
-    private static final int UNENCOUNTERED_BIAS = 5;
+    private static final int UNENCOUNTERED_BIAS = 2;
 
     private ScraperDb db;
     private ParlerClient client;
@@ -224,6 +224,9 @@ public class ParlerScraping {
     private double weighUser(ParlerUser i) {
         return Math.log(i.getScore());
     }
+    
+    // TODO: getRandomTime() for followers and followees should probably be allowed for any time range
+    // TODO: Random user selection should only select users who existed before the endDate
 
     /**
      * Gets a random time for this particular query which is not within a range which has already been scraped (or

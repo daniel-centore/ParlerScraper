@@ -84,13 +84,13 @@ public class ParlerClient {
             } catch (Exception e) {
                 e.printStackTrace();
                 attempt++;
+                gui.println("> API REQUEST ATTEMPT " + attempt + " FAILED: " + e.getLocalizedMessage());
+                gui.println("> Endpoint: " + endpoint);
                 if (attempt >= MAX_ATTEMPTS) {
                     gui.println("> Giving up :(");
                     return null;
                 }
                 long retryTime = waitTime * (long) Math.pow(2, attempt);
-                gui.println("> API REQUEST ATTEMPT " + attempt + " FAILED: " + e.getLocalizedMessage());
-                gui.println("> Endpoint: " + endpoint);
                 gui.println("> Retrying in " + retryTime + "ms...");
                 PUtils.sleep(retryTime);
                 gui.println("> Retrying...");
