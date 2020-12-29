@@ -269,7 +269,8 @@ public class ScraperDb {
                 startTime,
                 // If the scrape failed, mark everything as occupied from start of time to the request
                 response == null ? ParlerTime.fromUnixTimestampMs(0L) : response.getNextKey(),
-                response != null));
+                response != null,
+                ParlerTime.now().toParlerTimestamp()));
         endTransaction();
     }
 
@@ -327,7 +328,7 @@ public class ScraperDb {
                         + TAB + "Scores \u22640: %d\n"
                         + "Total Hashtags: %d\n"
                         + "\n"
-                        + "Posts (%s to %s): %s\n",
+                        + "Posts (%s thru %s): %s\n",
                 totalPosts,
                 totalUsers,
                 scoresGreaterZero,

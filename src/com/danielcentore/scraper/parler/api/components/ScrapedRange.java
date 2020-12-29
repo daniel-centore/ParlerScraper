@@ -23,13 +23,17 @@ public class ScrapedRange {
     String scrapeStart;
     String scrapeEnd;
     Boolean scrapeSuccessful;
+    
+    // When did we scrape this
+    String scrapeTimestamp;
 
-    public ScrapedRange(ScrapeType scrapedType, String scrapedId, ParlerTime scrapeStart, ParlerTime scrapeEnd, boolean scrapeSuccessful) {
+    public ScrapedRange(ScrapeType scrapedType, String scrapedId, ParlerTime scrapeStart, ParlerTime scrapeEnd, Boolean scrapeSuccessful,String scrapeTimestamp) {
         this.scrapedType = scrapedType;
         this.scrapedId = scrapedId;
         this.scrapeStart = scrapeStart == null ? null : scrapeStart.toParlerTimestamp();
         this.scrapeEnd = scrapeEnd == null ? null : scrapeEnd.toParlerTimestamp();
         this.scrapeSuccessful = scrapeSuccessful;
+        this.scrapeTimestamp = scrapeTimestamp;
     }
 
     public ScrapedRange() {
@@ -91,6 +95,15 @@ public class ScrapedRange {
 
     public void setScrapeSuccessful(Boolean scrapeSuccessful) {
         this.scrapeSuccessful = scrapeSuccessful;
+    }
+    
+    @Column(name = "scrape_timestamp")
+    public String getScrapeTimestamp() {
+        return scrapeTimestamp;
+    }
+
+    public void setScrapeTimestamp(String scrapeTimestamp) {
+        this.scrapeTimestamp = scrapeTimestamp;
     }
     
     @Transient

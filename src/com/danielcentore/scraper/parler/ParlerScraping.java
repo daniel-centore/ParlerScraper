@@ -29,8 +29,9 @@ public class ParlerScraping {
     private static final String TAB = Main.TAB;
 
     private static final RandomDataGenerator random = new RandomDataGenerator();
-    
+
     private static final int UNENCOUNTERED_BIAS = 2;
+    private static final int USERS_PER_HASHTAG = 5;
 
     private ScraperDb db;
     private ParlerClient client;
@@ -52,6 +53,9 @@ public class ParlerScraping {
 
         this.startTime = startTime;
         this.endTime = endTime;
+
+        gui.println("Scraping from " + startTime.toSimpleDateTimeMsFormat() + " thru "
+                + endTime.toSimpleDateTimeMsFormat());
 
         gui.println("######################");
         gui.println("### Scraping Seeds ###");
@@ -82,8 +86,10 @@ public class ParlerScraping {
             }
             scrapeHashtag(hashtag.getHashtag(), false, htDebug);
 
-            ParlerUser user = getWeightedRandomUser();
-            scrapeUser(user, false);
+            for (int i = 0; i < USERS_PER_HASHTAG; ++i) {
+                ParlerUser user = getWeightedRandomUser();
+                scrapeUser(user, false);
+            }
         }
 
         //        while (!stopRequested) {
@@ -108,7 +114,7 @@ public class ParlerScraping {
             }
         }
 
-        ParlerTime randomTime = getRandomTime(ScrapeType.HASHTAG_POSTS, hashtag);
+        ParlerTime randomTime = getRandomTime(ScrapeType.HASHTAG_POSTS, hashtag, this.startTime, this.endTime);
         gui.println(TAB + "Fetching posts from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
         PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(hashtag, randomTime);
 
@@ -132,8 +138,8 @@ public class ParlerScraping {
     private void scrapeUsername(String username, boolean skipIfExists, String debugInfo) {
         gui.println("Scraping @" + username + " (" + debugInfo + ")");
 
-        ParlerUser profile = db.getParlerUserByUsername(username);
         if (skipIfExists) {
+            ParlerUser profile = db.getParlerUserByUsername(username);
             if (profile != null && profile.isFullyScanned()) {
                 gui.println(TAB + "Already exists in local DB; skipping");
                 return;
@@ -144,23 +150,34 @@ public class ParlerScraping {
             return;
         }
 
-        if (profile == null || !profile.isFullyScanned()) {
-            gui.println(TAB + "Fetching profile from API...");
-            profile = client.fetchProfile(username);
+        gui.println(TAB + "Fetching profile from API...");
+        ParlerUser profile = client.fetchProfile(username);
 
-            gui.println(TAB + "Storing profile in local DB...");
-            db.storeUser(profile);
-        } else {
-            gui.println(TAB + "Using fully scanned profile from local DB");
-        }
+        gui.println(TAB + "Storing profile in local DB...");
+        db.storeUser(profile);
+
         String userId = profile.getParlerId();
 
         if (stopRequested) {
             return;
         }
 
-        {
-            ParlerTime randomTime = getRandomTime(ScrapeType.USER_POSTS, userId);
+        ParlerTime start = this.startTime;
+        ParlerTime end = this.endTime;
+
+        // Move start to the user's joined time if they joined after the start
+        ParlerTime joinedTime = profile.getJoinerParlerTime();
+        if (joinedTime != null && start.compareTo(joinedTime) < 0) {
+            start = joinedTime;
+        }
+        
+        // Use the user's joined time for followers and following
+        ParlerTime earliest = joinedTime != null ? joinedTime : startTime;
+
+        if (profile.getPosts() != null && profile.getPosts() == 0) {
+            gui.println(TAB + "User has 0 posts; skipping post API call");
+        } else {
+            ParlerTime randomTime = getRandomTime(ScrapeType.USER_POSTS, userId, start, end);
             gui.println(TAB + "Fetching posts from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
             PagedParlerPosts pagedPosts = client.fetchPagedPosts(profile, randomTime);
             if (pagedPosts != null) {
@@ -177,8 +194,10 @@ public class ParlerScraping {
             return;
         }
 
-        {
-            ParlerTime randomTime = getRandomTime(ScrapeType.USER_FOLLOWEES, userId);
+        if (profile.getFollowing() != null && profile.getFollowing() == 0) {
+            gui.println(TAB + "User is following 0 people; skipping followee API call");
+        } else {
+            ParlerTime randomTime = getRandomTime(ScrapeType.USER_FOLLOWEES, userId, earliest, end);
             gui.println(TAB + "Fetching followees from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
             PagedParlerUsers pagedFollowing = client.fetchFollowers(profile, randomTime);
             if (pagedFollowing != null) {
@@ -195,8 +214,10 @@ public class ParlerScraping {
             return;
         }
 
-        {
-            ParlerTime randomTime = getRandomTime(ScrapeType.USER_FOLLOWERS, userId);
+        if (profile.getFollowers() != null && profile.getFollowers() == 0) {
+            gui.println(TAB + "User has 0 followers; skipping followers API call");
+        } else {
+            ParlerTime randomTime = getRandomTime(ScrapeType.USER_FOLLOWERS, userId, earliest, end);
             gui.println(TAB + "Fetching followers from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
             PagedParlerUsers pagedFollowers = client.fetchFollowers(profile, randomTime);
             if (pagedFollowers != null) {
@@ -224,8 +245,7 @@ public class ParlerScraping {
     private double weighUser(ParlerUser i) {
         return Math.log(i.getScore());
     }
-    
-    // TODO: getRandomTime() for followers and followees should probably be allowed for any time range
+
     // TODO: Random user selection should only select users who existed before the endDate
 
     /**
@@ -236,13 +256,13 @@ public class ParlerScraping {
      * @param id
      * @return
      */
-    private ParlerTime getRandomTime(ScrapeType scrapeType, String id) {
+    private ParlerTime getRandomTime(ScrapeType scrapeType, String id, ParlerTime start, ParlerTime end) {
         List<ScrapedRange> allRanges = db.getAllRanges(scrapeType, id);
         // Include range of everything up until the earliest time
-        allRanges.add(new ScrapedRange(scrapeType, id, ParlerTime.fromUnixTimestampMs(0L), this.startTime, true));
+        allRanges.add(new ScrapedRange(scrapeType, id, ParlerTime.fromUnixTimestampMs(0L), start, null, null));
         List<TimeInterval> ranges = PUtils.mergeScrapedRanges(allRanges);
 
-        long maxMs = this.endTime.toUnixTimeMs();
+        long maxMs = end.toUnixTimeMs();
 
         long maxRandom = maxMs;
         for (TimeInterval ti : ranges) {

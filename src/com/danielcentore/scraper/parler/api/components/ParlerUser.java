@@ -11,6 +11,7 @@ import javax.persistence.Transient;
 
 import com.danielcentore.scraper.parler.PUtils;
 import com.danielcentore.scraper.parler.api.ParlerClient;
+import com.danielcentore.scraper.parler.api.ParlerTime;
 import com.danielcentore.scraper.parler.db.ListToJsonConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -241,6 +242,11 @@ public class ParlerUser extends ParlerResponse {
 
     public void setJoined(String joined) {
         this.joined = joined;
+    }
+    
+    @Transient
+    public ParlerTime getJoinerParlerTime() {
+        return getJoined() == null ? null : ParlerTime.fromCompressedParlerTimestamp(getJoined());
     }
 
     @Column(name = "name")

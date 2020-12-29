@@ -19,6 +19,8 @@ public class ParlerTime implements Comparable<ParlerTime> {
 
     final static DateFormat SIMPLE_DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
     
+    final static DateFormat SIMPLE_DATETIME_MS_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    
     final static DateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     
     // e.g. 20201223150519
@@ -29,6 +31,7 @@ public class ParlerTime implements Comparable<ParlerTime> {
         SIMPLE_DATETIME_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
         COMPRESSED_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
         SIMPLE_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+        SIMPLE_DATETIME_MS_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     final int year;
@@ -60,6 +63,10 @@ public class ParlerTime implements Comparable<ParlerTime> {
 
     public String toSimpleDateTimeFormat() {
         return SIMPLE_DATETIME_FORMAT.format(toCalendar().getTime());
+    }
+    
+    public String toSimpleDateTimeMsFormat() {
+        return SIMPLE_DATETIME_MS_FORMAT.format(toCalendar().getTime());
     }
     
     public String toSimpleDateFormat() {
@@ -114,6 +121,18 @@ public class ParlerTime implements Comparable<ParlerTime> {
 
         return fromCalendar(calendar, extended);
     }
+    
+    public static ParlerTime fromCompressedParlerTimestamp(String timestamp) {
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+        try {
+            Date parsedTime = COMPRESSED_FORMAT.parse(timestamp);
+            calendar.setTime(parsedTime);
+            return fromCalendar(calendar);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static ParlerTime fromYyyyMmDd(String date) {
         try {
@@ -138,8 +157,15 @@ public class ParlerTime implements Comparable<ParlerTime> {
     public static ParlerTime fromCalendar(Calendar calendar) {
         return fromCalendar(calendar, "0");
     }
+    
+    public static ParlerTime now() {
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return fromCalendar(calendar, "0");
+    }
 
     public static ParlerTime fromCalendar(Calendar calendar, String extended) {
+        calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         return new ParlerTime(
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH) + 1,

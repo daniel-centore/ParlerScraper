@@ -85,8 +85,6 @@ public class Main implements ICookiesListener {
 
         ParlerTime startTime = ParlerTime.fromYyyyMmDd(startDate);
         ParlerTime endTime = ParlerTime.fromYyyyMmDd(endDate);
-        
-        System.out.println(endTime.toParlerTimestamp());
 
         if (startTime == null || endTime == null) {
             gui.println("> ERROR: Invalid date format");
@@ -105,7 +103,9 @@ public class Main implements ICookiesListener {
         endCal.add(Calendar.MILLISECOND, -1);
         endTime = ParlerTime.fromCalendar(endCal);
         
-        System.out.println(endTime.toParlerTimestamp());
+        if (endTime.compareTo(ParlerTime.now()) > 0) {
+            endTime = ParlerTime.now();
+        }
         
         scraperDb.updateStartEndTime(startTime, endTime);
 

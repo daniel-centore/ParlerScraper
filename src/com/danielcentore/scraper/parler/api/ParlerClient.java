@@ -56,13 +56,7 @@ public class ParlerClient {
     public String issueRequest(String referrer, String endpoint) {
 
         int attempt = 0;
-        long waitTime = 1500 + random.nextInt(1500);
-
-        // 0.5% of the time we take a coffee break 
-        if (random.nextInt(1000) < 5) {
-            gui.println("> Pausing extra long this time");
-            waitTime = 30000 + random.nextInt(60000);
-        }
+        long waitTime = 1000 + random.nextInt(1500);
 
         while (true) {
             try {
