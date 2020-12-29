@@ -1,7 +1,11 @@
 package com.danielcentore.scraper.parler;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.commons.math3.distribution.EnumeratedDistribution;
+import org.apache.commons.math3.util.Pair;
+import org.hibernate.cache.spi.support.AbstractReadWriteAccess.Item;
 import org.hibernate.cfg.NotYetImplementedException;
 
 import com.danielcentore.scraper.parler.api.ParlerClient;
@@ -52,7 +56,7 @@ public class ParlerScraping {
             } else if (seed.startsWith("#")) {
                 scrapeHashtag(seed.substring(1), true);
             } else {
-                scrapeUsername(seed, true);
+                scrapeUsername(seed, true, "seed");
             }
         }
 
@@ -79,7 +83,8 @@ public class ParlerScraping {
         }
 
         gui.println(TAB + "Fetching from API...");
-        PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(hashtag);
+        PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(hashtag,
+                getRandomTime(ScrapeType.HASHTAG_POSTS, hashtag));
 
         gui.println(TAB + "Storing in local DB...");
         db.storePagedPosts(hashtagPosts);
@@ -90,11 +95,11 @@ public class ParlerScraping {
     }
 
     private void scrapeUser(ParlerUser user, boolean skipIfExists) {
-        scrapeUsername(user.getUsername(), skipIfExists);
+        scrapeUsername(user.getUsername(), skipIfExists, "score="+user.getScore());
     }
 
-    private void scrapeUsername(String username, boolean skipIfExists) {
-        gui.println("Scraping @" + username);
+    private void scrapeUsername(String username, boolean skipIfExists, String debugInfo) {
+        gui.println("Scraping @" + username + " (" + debugInfo + ")");
 
         ParlerUser profile = db.getParlerUserByUsername(username);
         if (skipIfExists) {
@@ -125,7 +130,7 @@ public class ParlerScraping {
 
         {
             gui.println(TAB + "Fetching posts from API...");
-            PagedParlerPosts pagedPosts = client.fetchPagedPosts(profile, getRandomUserTime(profile));
+            PagedParlerPosts pagedPosts = client.fetchPagedPosts(profile, getRandomTime(ScrapeType.USER_POSTS, userId));
             int postCount = pagedPosts.getPostCount();
             gui.println(TAB + "Storing " + postCount + " posts in local DB...");
             db.storePagedPosts(pagedPosts);
@@ -138,7 +143,8 @@ public class ParlerScraping {
 
         {
             gui.println(TAB + "Fetching followees from API...");
-            PagedParlerUsers pagedFollowing = client.fetchFollowers(profile, getRandomUserTime(profile));
+            PagedParlerUsers pagedFollowing = client.fetchFollowers(profile,
+                    getRandomTime(ScrapeType.USER_FOLLOWEES, userId));
             int followingCount = pagedFollowing.getUsers().size();
             gui.println(TAB + "Storing " + followingCount + " followees in local DB...");
             db.storePagedUsers(pagedFollowing);
@@ -151,7 +157,8 @@ public class ParlerScraping {
 
         {
             gui.println(TAB + "Fetching followers from API...");
-            PagedParlerUsers pagedFollowers = client.fetchFollowers(profile, getRandomUserTime(profile));
+            PagedParlerUsers pagedFollowers = client.fetchFollowers(profile,
+                    getRandomTime(ScrapeType.USER_FOLLOWERS, userId));
             int followersCount = pagedFollowers.getUsers().size();
             gui.println(TAB + "Storing " + followersCount + " followers in local DB...");
             db.storePagedUsers(pagedFollowers);
@@ -162,19 +169,23 @@ public class ParlerScraping {
     }
 
     private ParlerUser getWeightedRandomUser() {
-        // TODO: Make sure the creation time is before or during the time window!
-        throw new NotYetImplementedException();
+        List<ParlerUser> allNotWorthlessUsers = db.getAllNotWorthlessUsers();
+        List<Pair<ParlerUser, Double>> userWeights = allNotWorthlessUsers.stream()
+                .map(i -> new Pair<ParlerUser, Double>(i, weighUser(i)))
+                .collect(Collectors.toList());
+
+        return new EnumeratedDistribution<>(userWeights).sample();
     }
 
-    private ParlerTime getRandomUserTime(ParlerUser user) {
-        return null; // TODO!!!!!!!!!!!
+    private double weighUser(ParlerUser i) {
+        return Math.log(i.getScore());
+    }
+
+    private ParlerTime getRandomTime(ScrapeType scrapeType, String id) {
+        return null; // TODO
     }
 
     private String getWeightedRandomHashtag() {
-        throw new NotYetImplementedException();
-    }
-
-    private ParlerTime getRandomHashtagTime(String hashtag) {
         throw new NotYetImplementedException();
     }
 

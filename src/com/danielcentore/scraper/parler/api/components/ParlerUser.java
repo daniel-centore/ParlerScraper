@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @Entity
 @Table(name = "users")
-public class ParlerUser {
+public class ParlerUser extends ParlerResponse {
 
     // == Parler Raw Fields == //
     String parlerId;

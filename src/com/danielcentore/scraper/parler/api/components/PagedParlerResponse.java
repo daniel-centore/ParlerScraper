@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @author Daniel Centore
  */
-public class PagedParlerResponse {
+public class PagedParlerResponse extends ParlerResponse {
 
     @JsonProperty("last")
     Boolean last;

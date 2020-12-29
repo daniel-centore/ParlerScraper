@@ -13,6 +13,7 @@ import java.util.Random;
 import com.danielcentore.scraper.parler.PUtils;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
+import com.danielcentore.scraper.parler.api.components.ParlerMaybeErrorResponse;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
 import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -53,7 +54,7 @@ public class ParlerClient {
         this.gui = gui;
     }
 
-    public Response issueRequest(String referrer, String endpoint) {
+    public String issueRequest(String referrer, String endpoint) {
 
         int attempt = 0;
         long waitTime = 2000 + random.nextInt(1000);
@@ -61,11 +62,20 @@ public class ParlerClient {
         while (true) {
             try {
                 Response result = issueRequestNoRetry(referrer, endpoint);
-                
+
                 gui.println("> Pausing " + waitTime + "ms...");
                 PUtils.sleep(waitTime);
+
+                String json = result.body().string();
                 
-                return result;
+                String message = mapper.readValue(json, ParlerMaybeErrorResponse.class).getMessage();
+                if (message != null) {
+                    gui.println("> API MESSAGE: " + message);
+                    gui.println("Full json: " + json);
+                    throw new RuntimeException("API Message");
+                }
+                
+                return json;
             } catch (Exception e) {
                 e.printStackTrace();
                 attempt++;
@@ -121,11 +131,11 @@ public class ParlerClient {
 
     public ParlerUser fetchProfile(String username) {
         String eUsername = urlencode(username);
-        Response response = issueRequest(
+        String response = issueRequest(
                 "profile/" + eUsername + "/posts",
                 "v1/profile?username=" + eUsername);
         try {
-            return mapper.readValue(response.body().byteStream(), ParlerUser.class)
+            return mapper.readValue(response, ParlerUser.class)
                     .setFullyScanned();
         } catch (JsonParseException e) {
             e.printStackTrace();
@@ -142,11 +152,11 @@ public class ParlerClient {
     }
 
     public PagedParlerPosts fetchPagedPosts(ParlerUser user, ParlerTime start) {
-        Response response = fetchPagedUserResponse("profile/" + user.getUrlEncodedUsername() + "/posts",
+        String response = fetchPagedUserResponse("profile/" + user.getUrlEncodedUsername() + "/posts",
                 "v1/post/creator", user, start);
 
         try {
-            return mapper.readValue(response.body().byteStream(), PagedParlerPosts.class);
+            return mapper.readValue(response, PagedParlerPosts.class);
         } catch (JsonParseException e) {
             e.printStackTrace();
         } catch (JsonMappingException e) {
@@ -185,10 +195,10 @@ public class ParlerClient {
     }
 
     public PagedParlerUsers fetchPagedUsers(String referrer, String endpointBase, ParlerUser user, ParlerTime start) {
-        Response response = fetchPagedUserResponse(referrer, "v1/follow/" + endpointBase, user, start);
+        String response = fetchPagedUserResponse(referrer, "v1/follow/" + endpointBase, user, start);
 
         try {
-            return mapper.readValue(response.body().byteStream(), PagedParlerUsers.class);
+            return mapper.readValue(response, PagedParlerUsers.class);
         } catch (JsonParseException e) {
             e.printStackTrace();
         } catch (JsonMappingException e) {
@@ -200,7 +210,7 @@ public class ParlerClient {
         return null;
     }
 
-    public Response fetchPagedUserResponse(String referrer, String endpointBase, ParlerUser user, ParlerTime start) {
+    public String fetchPagedUserResponse(String referrer, String endpointBase, ParlerUser user, ParlerTime start) {
         String eParlerId = user.getUrlEncodedParlerId();
 
         // The limit seems to be ignored. The web version always sets it to 10 so we do too.
@@ -228,10 +238,10 @@ public class ParlerClient {
             endpoint += "&startkey=" + start.toParlerTimestamp();
         }
 
-        Response response = issueRequest("search?hashtag=" + hashtag, endpoint);
+        String response = issueRequest("search?hashtag=" + hashtag, endpoint);
 
         try {
-            return mapper.readValue(response.body().byteStream(), PagedParlerPosts.class);
+            return mapper.readValue(response, PagedParlerPosts.class);
         } catch (JsonParseException e) {
             e.printStackTrace();
         } catch (JsonMappingException e) {
