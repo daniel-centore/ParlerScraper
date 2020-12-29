@@ -76,14 +76,14 @@ public class ParlerScraperGui extends javax.swing.JFrame {
 
         seedArea.setColumns(20);
         seedArea.setRows(5);
-        seedArea.setText("#parler\n#twexit\n#meme\n#techtyrants\n#blm\n#antifa\n#democrats\n#republicans\n#maga\n#trump\nSeanHannity\nTedCruz\nRudyG\nTuckerCarlson\nBreitbartNews\nMarklevinshow\nDevinnunes\nofficialphilrobertson\nMariabartiromotv\nSharylAttkisson\nTitoOrtiz\nKirstiealley\nwaynedupreeshow");
+        seedArea.setText("SeanHannity\nTedCruz\nRudyG\nTuckerCarlson\nBreitbartNews\n#canada");
         jScrollPane1.setViewportView(seedArea);
 
         jLabel1.setText("1) a) Log in to Parler in Chrome");
 
         jLabel2.setText("2) Put in some seed usernames and hashtags for us to crawl from:");
 
-        jLabel3.setText("(the defaults are probably plenty)");
+        jLabel3.setText("(the defaults are plenty, more is not better)");
 
         jLabel6.setText("4) Scrape Data:");
 
@@ -181,9 +181,6 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                             .addComponent(jLabel17)
                             .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(77, 77, 77)
-                        .addComponent(jLabel3))
-                    .addGroup(layout.createSequentialGroup()
                         .addGap(28, 28, 28)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 485, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -202,7 +199,10 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                                 .addComponent(startBtn)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(stopBtn))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 379, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 379, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(37, 37, 37)
+                        .addComponent(jLabel3)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(textAreaScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 503, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -235,7 +235,7 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(jLabel2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel3)
+                                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)

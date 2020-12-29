@@ -1,14 +1,12 @@
 package com.danielcentore.scraper.parler.api;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import com.danielcentore.scraper.parler.PUtils;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
@@ -16,8 +14,6 @@ import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
 import com.danielcentore.scraper.parler.api.components.ParlerMaybeErrorResponse;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
 import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -30,12 +26,15 @@ import com.squareup.okhttp.Response;
  */
 public class ParlerClient {
 
-    public static String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    public static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) "
             + "Chrome/87.0.4280.88 Safari/537.36";
 
-    public static String MAIN_DOMAIN = "https://parler.com";
-    public static String API_DOMAIN = "https://api.parler.com";
+    public static final String MAIN_DOMAIN = "https://parler.com";
+    public static final String API_DOMAIN = "https://api.parler.com";
+
+    public static final int TIMEOUT_SEC = 20;
+    public static final int MAX_ATTEMPTS = 2;
 
     private static ObjectMapper mapper = new ObjectMapper();
     private static Random random = new Random();
@@ -58,7 +57,7 @@ public class ParlerClient {
 
         int attempt = 0;
         long waitTime = 1500 + random.nextInt(1500);
-        
+
         // 0.5% of the time we take a coffee break 
         if (random.nextInt(1000) < 5) {
             gui.println("> Pausing extra long this time");
@@ -70,36 +69,38 @@ public class ParlerClient {
                 Response result = issueRequestNoRetry(referrer, endpoint);
 
                 String json = result.body().string();
-                
+
                 String message = mapper.readValue(json, ParlerMaybeErrorResponse.class).getMessage();
                 if (message != null) {
                     gui.println("> API MESSAGE: " + message);
-                    gui.println("Full json: " + json);
-                    gui.println("Endpoint: " + endpoint);
+                    gui.println("> Full json: " + json);
                     throw new RuntimeException("API Message");
                 }
-                
+
                 gui.println("> Pausing " + waitTime + "ms...");
                 PUtils.sleep(waitTime);
-                
+
                 return json;
             } catch (Exception e) {
                 e.printStackTrace();
                 attempt++;
-                if (attempt >= 5) {
+                if (attempt >= MAX_ATTEMPTS) {
                     gui.println("> Giving up :(");
                     return null;
                 }
                 long retryTime = waitTime * (long) Math.pow(2, attempt);
                 gui.println("> API REQUEST ATTEMPT " + attempt + " FAILED: " + e.getLocalizedMessage());
+                gui.println("> Endpoint: " + endpoint);
                 gui.println("> Retrying in " + retryTime + "ms...");
                 PUtils.sleep(retryTime);
+                gui.println("> Retrying...");
             }
         }
     }
 
     private Response issueRequestNoRetry(String referrer, String endpoint) throws IOException {
         OkHttpClient client = new OkHttpClient();
+        client.setReadTimeout(TIMEOUT_SEC, TimeUnit.SECONDS);
 
         Request request = new Request.Builder()
                 .addHeader("User-Agent", USER_AGENT)
@@ -148,11 +149,7 @@ public class ParlerClient {
         try {
             return mapper.readValue(response, ParlerUser.class)
                     .setFullyScanned();
-        } catch (JsonParseException e) {
-            e.printStackTrace();
-        } catch (JsonMappingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -168,11 +165,7 @@ public class ParlerClient {
 
         try {
             return mapper.readValue(response, PagedParlerPosts.class);
-        } catch (JsonParseException e) {
-            e.printStackTrace();
-        } catch (JsonMappingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -210,11 +203,7 @@ public class ParlerClient {
 
         try {
             return mapper.readValue(response, PagedParlerUsers.class);
-        } catch (JsonParseException e) {
-            e.printStackTrace();
-        } catch (JsonMappingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -253,11 +242,7 @@ public class ParlerClient {
 
         try {
             return mapper.readValue(response, PagedParlerPosts.class);
-        } catch (JsonParseException e) {
-            e.printStackTrace();
-        } catch (JsonMappingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;

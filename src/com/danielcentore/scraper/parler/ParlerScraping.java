@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.distribution.EnumeratedDistribution;
+import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.util.Pair;
 
@@ -14,6 +15,7 @@ import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
 import com.danielcentore.scraper.parler.api.components.ParlerHashtag;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
+import com.danielcentore.scraper.parler.api.components.ScrapedRange;
 import com.danielcentore.scraper.parler.db.ScraperDb;
 import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 
@@ -26,9 +28,16 @@ public class ParlerScraping {
 
     private static final String TAB = Main.TAB;
 
+    private static final RandomDataGenerator random = new RandomDataGenerator();
+    
+    private static final int UNENCOUNTERED_BIAS = 5;
+
     private ScraperDb db;
     private ParlerClient client;
     private ParlerScraperGui gui;
+
+    private ParlerTime startTime;
+    private ParlerTime endTime;
 
     private volatile boolean stopRequested = false;
 
@@ -40,6 +49,9 @@ public class ParlerScraping {
 
     public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds) {
         stopRequested = false;
+
+        this.startTime = startTime;
+        this.endTime = endTime;
 
         gui.println("######################");
         gui.println("### Scraping Seeds ###");
@@ -73,6 +85,14 @@ public class ParlerScraping {
             ParlerUser user = getWeightedRandomUser();
             scrapeUser(user, false);
         }
+
+        //        while (!stopRequested) {
+        //            //            System.out.println(getRandomTime(ScrapeType.HASHTAG_POSTS, "parler").toSimpleFormat());
+        //            scrapeHashtag("parler", false, "");
+        //            //
+        //            //            scrapeUsername("SeanHannity", false, "");
+        //            PUtils.sleep(5000);
+        //        }
     }
 
     private void scrapeHashtag(String hashtag, boolean skipIfExists, String debug) {
@@ -88,14 +108,19 @@ public class ParlerScraping {
             }
         }
 
-        gui.println(TAB + "Fetching from API...");
-        PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(hashtag,
-                getRandomTime(ScrapeType.HASHTAG_POSTS, hashtag));
+        ParlerTime randomTime = getRandomTime(ScrapeType.HASHTAG_POSTS, hashtag);
+        gui.println(TAB + "Fetching posts from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
+        PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(hashtag, randomTime);
 
-        gui.println(TAB + "Storing in local DB...");
-        db.storePagedPosts(hashtagPosts);
-        db.storeHashtagTotalPostCount(hashtag, hashtagPosts.getTotalPosts());
-        db.storeScrapedRange(ScrapeType.HASHTAG_POSTS, hashtag, hashtagPosts);
+        if (hashtagPosts != null) {
+            int postCount = hashtagPosts.getPostCount();
+            gui.println(TAB + "Storing " + postCount + " posts in local DB...");
+            db.storePagedPosts(hashtagPosts);
+            db.storeHashtagTotalPostCount(hashtag, hashtagPosts.getTotalPosts());
+        } else {
+            gui.println(TAB + "Failure - Blacklisting this query and earlier");
+        }
+        db.storeScrapedRange(ScrapeType.HASHTAG_POSTS, hashtag, randomTime, hashtagPosts);
 
         gui.println(TAB + "Done.");
     }
@@ -135,12 +160,17 @@ public class ParlerScraping {
         }
 
         {
-            gui.println(TAB + "Fetching posts from API...");
-            PagedParlerPosts pagedPosts = client.fetchPagedPosts(profile, getRandomTime(ScrapeType.USER_POSTS, userId));
-            int postCount = pagedPosts.getPostCount();
-            gui.println(TAB + "Storing " + postCount + " posts in local DB...");
-            db.storePagedPosts(pagedPosts);
-            db.storeScrapedRange(ScrapeType.USER_POSTS, userId, pagedPosts);
+            ParlerTime randomTime = getRandomTime(ScrapeType.USER_POSTS, userId);
+            gui.println(TAB + "Fetching posts from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
+            PagedParlerPosts pagedPosts = client.fetchPagedPosts(profile, randomTime);
+            if (pagedPosts != null) {
+                int postCount = pagedPosts.getPostCount();
+                gui.println(TAB + "Storing " + postCount + " posts in local DB...");
+                db.storePagedPosts(pagedPosts);
+            } else {
+                gui.println(TAB + "Failure - Blacklisting this query and earlier");
+            }
+            db.storeScrapedRange(ScrapeType.USER_POSTS, userId, randomTime, pagedPosts);
         }
 
         if (stopRequested) {
@@ -148,13 +178,17 @@ public class ParlerScraping {
         }
 
         {
-            gui.println(TAB + "Fetching followees from API...");
-            PagedParlerUsers pagedFollowing = client.fetchFollowers(profile,
-                    getRandomTime(ScrapeType.USER_FOLLOWEES, userId));
-            int followingCount = pagedFollowing.getUsers().size();
-            gui.println(TAB + "Storing " + followingCount + " followees in local DB...");
-            db.storePagedUsers(pagedFollowing);
-            db.storeScrapedRange(ScrapeType.USER_FOLLOWEES, userId, pagedFollowing);
+            ParlerTime randomTime = getRandomTime(ScrapeType.USER_FOLLOWEES, userId);
+            gui.println(TAB + "Fetching followees from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
+            PagedParlerUsers pagedFollowing = client.fetchFollowers(profile, randomTime);
+            if (pagedFollowing != null) {
+                int followingCount = pagedFollowing.getUsers().size();
+                gui.println(TAB + "Storing " + followingCount + " followees in local DB...");
+                db.storePagedUsers(pagedFollowing);
+            } else {
+                gui.println(TAB + "Failure - Blacklisting this query and earlier");
+            }
+            db.storeScrapedRange(ScrapeType.USER_FOLLOWEES, userId, randomTime, pagedFollowing);
         }
 
         if (stopRequested) {
@@ -162,13 +196,17 @@ public class ParlerScraping {
         }
 
         {
-            gui.println(TAB + "Fetching followers from API...");
-            PagedParlerUsers pagedFollowers = client.fetchFollowers(profile,
-                    getRandomTime(ScrapeType.USER_FOLLOWERS, userId));
-            int followersCount = pagedFollowers.getUsers().size();
-            gui.println(TAB + "Storing " + followersCount + " followers in local DB...");
-            db.storePagedUsers(pagedFollowers);
-            db.storeScrapedRange(ScrapeType.USER_FOLLOWERS, userId, pagedFollowers);
+            ParlerTime randomTime = getRandomTime(ScrapeType.USER_FOLLOWERS, userId);
+            gui.println(TAB + "Fetching followers from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
+            PagedParlerUsers pagedFollowers = client.fetchFollowers(profile, randomTime);
+            if (pagedFollowers != null) {
+                int followersCount = pagedFollowers.getUsers().size();
+                gui.println(TAB + "Storing " + followersCount + " followers in local DB...");
+                db.storePagedUsers(pagedFollowers);
+            } else {
+                gui.println(TAB + "Failure - Blacklisting this query and earlier");
+            }
+            db.storeScrapedRange(ScrapeType.USER_FOLLOWERS, userId, randomTime, pagedFollowers);
         }
 
         gui.println(TAB + "Done.");
@@ -187,8 +225,40 @@ public class ParlerScraping {
         return Math.log(i.getScore());
     }
 
+    /**
+     * Gets a random time for this particular query which is not within a range which has already been scraped (or
+     * attempted to be scraped and failed)
+     * 
+     * @param scrapeType
+     * @param id
+     * @return
+     */
     private ParlerTime getRandomTime(ScrapeType scrapeType, String id) {
-        return null; // TODO
+        List<ScrapedRange> allRanges = db.getAllRanges(scrapeType, id);
+        // Include range of everything up until the earliest time
+        allRanges.add(new ScrapedRange(scrapeType, id, ParlerTime.fromUnixTimestampMs(0L), this.startTime, true));
+        List<TimeInterval> ranges = PUtils.mergeScrapedRanges(allRanges);
+
+        long maxMs = this.endTime.toUnixTimeMs();
+
+        long maxRandom = maxMs;
+        for (TimeInterval ti : ranges) {
+            if (ti.min > maxMs) {
+                break;
+            }
+
+            maxRandom -= (Math.min(ti.max, maxMs) - ti.min);
+        }
+
+        long value = random.nextLong(0, maxRandom);
+
+        for (TimeInterval ti : ranges) {
+            if (value > ti.min) {
+                value += (ti.max - ti.min);
+            }
+        }
+
+        return ParlerTime.fromUnixTimestampMs(value);
     }
 
     private ParlerHashtag getWeightedRandomHashtag() {
@@ -215,10 +285,10 @@ public class ParlerScraping {
         Long totalPosts = hashtag.getTotalPosts();
         if (totalPosts == null) {
             long encounters = hashtag.getEncounters();
-            if (nonNull > 0) {
-                totalPosts = (long) encountersToPosts.predict(encounters);
+            if (nonNull > 1) {
+                totalPosts = (long) encountersToPosts.predict(encounters) * UNENCOUNTERED_BIAS;
             } else {
-                totalPosts = encounters;
+                totalPosts = encounters * UNENCOUNTERED_BIAS;
             }
         }
         return totalPosts <= 0 ? Double.NEGATIVE_INFINITY : Math.log(totalPosts);

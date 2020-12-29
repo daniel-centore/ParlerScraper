@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 /**
  * Represents a timestamp from Parler. These comprise an ISO8601 UTC timestamp along with a poorly understood extra
@@ -15,6 +16,20 @@ import java.util.GregorianCalendar;
  */
 public class ParlerTime implements Comparable<ParlerTime> {
     final static DateFormat ISO8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+    final static DateFormat SIMPLE_DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    
+    final static DateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    
+    // e.g. 20201223150519
+    final static DateFormat COMPRESSED_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
+
+    static {
+        ISO8601_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+        SIMPLE_DATETIME_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+        COMPRESSED_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+        SIMPLE_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
 
     final int year;
     final int month;
@@ -39,8 +54,24 @@ public class ParlerTime implements Comparable<ParlerTime> {
     }
 
     public String toParlerTimestamp() {
-        Calendar calendar = toCalendar();
-        return ISO8601_FORMAT.format(calendar.getTime()) + "_" + extended;
+        return ISO8601_FORMAT.format(toCalendar().getTime()) + "_" + extended;
+    }
+
+    public String toSimpleDateTimeFormat() {
+        return SIMPLE_DATETIME_FORMAT.format(toCalendar().getTime());
+    }
+    
+    public String toSimpleDateFormat() {
+        return SIMPLE_DATE_FORMAT.format(toCalendar().getTime());
+    }
+    
+    
+    public String toParlerCompressedTimestamp() {
+        return COMPRESSED_FORMAT.format(toCalendar().getTime());
+    }
+
+    public Long toUnixTimeMs() {
+        return toCalendar().getTimeInMillis();
     }
 
     /**
@@ -64,7 +95,7 @@ public class ParlerTime implements Comparable<ParlerTime> {
                     throw new RuntimeException(e2);
                 }
             }
-            
+
         } else if (split.length == 2) {
             String iso8601 = split[0];
             extended = split[1];
@@ -93,6 +124,12 @@ public class ParlerTime implements Comparable<ParlerTime> {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static ParlerTime fromUnixTimestampMs(Long ms) {
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTimeInMillis(ms);
+        return fromCalendar(calendar, "0");
     }
 
     public static ParlerTime fromCalendar(Calendar calendar) {

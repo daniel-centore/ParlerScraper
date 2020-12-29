@@ -96,6 +96,8 @@ public class Main implements ICookiesListener {
             startTime = endTime;
             endTime = temp;
         }
+        
+        scraperDb.updateStartEndTime(startTime, endTime);
 
         // Subtract a day from the start time to make this an inclusive bound
         Calendar startCal = startTime.toCalendar();

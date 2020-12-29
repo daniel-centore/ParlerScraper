@@ -16,6 +16,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import com.danielcentore.scraper.parler.Main;
+import com.danielcentore.scraper.parler.api.ParlerTime;
 import com.danielcentore.scraper.parler.api.ScrapeType;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerResponse;
@@ -39,6 +40,9 @@ public class ScraperDb {
     private Session session;
     private ParlerScraperGui gui;
 
+    private ParlerTime startTime;
+    private ParlerTime endTime;
+
     public ScraperDb(ParlerScraperGui gui) {
         this.gui = gui;
 
@@ -52,6 +56,13 @@ public class ScraperDb {
                 .buildSessionFactory();
 
         session = sessionFactory.openSession();
+    }
+
+    public void updateStartEndTime(ParlerTime startTime, ParlerTime endTime) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+        
+        updateStatusArea();
     }
 
     public void storePagedPosts(PagedParlerPosts pagedPosts) {
@@ -198,12 +209,20 @@ public class ScraperDb {
     }
 
     public void storeUser(ParlerUser user) {
+        if (user == null) {
+            return;
+        }
+
         List<ParlerUser> input = new ArrayList<ParlerUser>();
         input.add(user);
         storeUsers(input);
     }
 
     public void storeUsers(Collection<ParlerUser> users) {
+        if (users == null) {
+            return;
+        }
+
         // Make sure there's only one of each
         users = new HashSet<ParlerUser>(users);
 
@@ -239,9 +258,18 @@ public class ScraperDb {
         endTransaction();
     }
 
-    public void storeScrapedRange(ScrapeType scrapedType, String scrapedId, PagedParlerResponse response) {
+    public void storeScrapedRange(ScrapeType scrapedType,
+            String scrapedId,
+            ParlerTime startTime,
+            PagedParlerResponse response) {
         beginTransaction();
-        session.save(new ScrapedRange(scrapedType, scrapedId, response.getCurrentKey(), response.getNextKey()));
+        session.save(new ScrapedRange(
+                scrapedType,
+                scrapedId,
+                startTime,
+                // If the scrape failed, mark everything as occupied from start of time to the request
+                response == null ? ParlerTime.fromUnixTimestampMs(0L) : response.getNextKey(),
+                response != null));
         endTransaction();
     }
 
@@ -249,10 +277,18 @@ public class ScraperDb {
     public List<ParlerUser> getAllPublicNotWorthlessUsers() {
         return session.createQuery("FROM ParlerUser U WHERE U.score > 0 AND U.privateAccount = 0").getResultList();
     }
-    
+
     @SuppressWarnings("unchecked")
     public List<ParlerHashtag> getAllHashtags() {
         return session.createQuery("FROM ParlerHashtag").getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ScrapedRange> getAllRanges(ScrapeType scrapeType, String id) {
+        return session.createQuery("FROM ScrapedRange R WHERE R.scrapedId = :id AND R.scrapedType = :scrapedType")
+                .setParameter("id", id)
+                .setParameter("scrapedType", scrapeType)
+                .getResultList();
     }
 
     public void beginTransaction() {
@@ -274,6 +310,16 @@ public class ScraperDb {
         long totalHashtags = (long) session.createQuery("SELECT count(*) FROM ParlerHashtag")
                 .getSingleResult();
 
+        String inDateRange = "[Press Start to Update]";
+        if (this.startTime != null && this.endTime != null) {
+            long totalPostsInDateRange = (long) session
+                    .createQuery("SELECT count(*) FROM ParlerPost P WHERE P.createdAt > :min AND P.createdAt < :max")
+                    .setParameter("min", this.startTime.toParlerCompressedTimestamp())
+                    .setParameter("max", this.endTime.toParlerCompressedTimestamp())
+                    .getSingleResult();
+            inDateRange = totalPostsInDateRange + "";
+        }
+
         String text = String.format(
                 "Total Posts: %d\n"
                         + "Total Users: %d\n"
@@ -281,12 +327,15 @@ public class ScraperDb {
                         + TAB + "Scores \u22640: %d\n"
                         + "Total Hashtags: %d\n"
                         + "\n"
-                        + "Posts in date range: TODO\n",
+                        + "Posts (%s to %s): %s\n",
                 totalPosts,
                 totalUsers,
                 scoresGreaterZero,
                 totalUsers - scoresGreaterZero,
-                totalHashtags);
+                totalHashtags,
+                startTime == null ? "n/a" : startTime.toSimpleDateFormat(),
+                endTime == null ? "n/a" : endTime.toSimpleDateFormat(),
+                inDateRange);
 
         gui.setStatusArea(text);
     }

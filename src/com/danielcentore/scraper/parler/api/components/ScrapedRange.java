@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.danielcentore.scraper.parler.api.ParlerTime;
 import com.danielcentore.scraper.parler.api.ScrapeType;
@@ -21,12 +22,14 @@ public class ScrapedRange {
     String scrapedId;
     String scrapeStart;
     String scrapeEnd;
+    Boolean scrapeSuccessful;
 
-    public ScrapedRange(ScrapeType scrapedType, String scrapedId, ParlerTime scrapeStart, ParlerTime scrapeEnd) {
+    public ScrapedRange(ScrapeType scrapedType, String scrapedId, ParlerTime scrapeStart, ParlerTime scrapeEnd, boolean scrapeSuccessful) {
         this.scrapedType = scrapedType;
         this.scrapedId = scrapedId;
         this.scrapeStart = scrapeStart == null ? null : scrapeStart.toParlerTimestamp();
         this.scrapeEnd = scrapeEnd == null ? null : scrapeEnd.toParlerTimestamp();
+        this.scrapeSuccessful = scrapeSuccessful;
     }
 
     public ScrapedRange() {
@@ -80,5 +83,30 @@ public class ScrapedRange {
     public void setScrapeEnd(String scrapeEnd) {
         this.scrapeEnd = scrapeEnd;
     }
+    
+    @Column(name = "scrape_successful")
+    public Boolean isScrapeSuccessful() {
+        return scrapeSuccessful;
+    }
+
+    public void setScrapeSuccessful(Boolean scrapeSuccessful) {
+        this.scrapeSuccessful = scrapeSuccessful;
+    }
+    
+    @Transient
+    public ParlerTime getStartParlerTime() {
+        return ParlerTime.fromParlerTimestamp(scrapeStart);
+    }
+    
+    @Transient
+    public ParlerTime getEndParlerTime() {
+        return ParlerTime.fromParlerTimestamp(scrapeEnd);
+    }
+
+    @Override
+    public String toString() {
+        return "ScrapedRange [scrapeEnd=" + getEndParlerTime().toSimpleDateTimeFormat() + ", scrapeStart=" + getStartParlerTime().toSimpleDateTimeFormat() + "]";
+    }
+
 
 }

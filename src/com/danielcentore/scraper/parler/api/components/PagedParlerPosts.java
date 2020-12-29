@@ -50,7 +50,14 @@ public class PagedParlerPosts extends PagedParlerResponse {
     
     @Transient
     public int getPostCount() {
-        return posts.size() + postReferences.size();
+        int result = 0;
+        if (posts != null) {
+            result += posts.size();
+        }
+        if (postReferences != null) {
+            result += postReferences.size();
+        }
+        return result;
     }
 
     public Integer getBadge() {
