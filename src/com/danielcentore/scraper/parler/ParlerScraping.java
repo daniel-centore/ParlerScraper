@@ -33,6 +33,9 @@ public class ParlerScraping {
     private static final int UNENCOUNTERED_BIAS = 2;
     private static final int USERS_PER_HASHTAG = 5;
 
+    // Many users have a "I just joined Parler! Looking forward to meeting everyone here." post, let's get real posts
+    public static final int MINIMUM_POSTS = 2;
+
     private ScraperDb db;
     private ParlerClient client;
     private ParlerScraperGui gui;
@@ -83,7 +86,7 @@ public class ParlerScraping {
                 ParlerUser user = getWeightedRandomUser();
                 scrapeUser(user, false);
             }
-            
+
             ParlerHashtag hashtag = getWeightedRandomHashtag();
             String htDebug = String.format("encounters=%,d", hashtag.getEncounters());
             if (hashtag.getTotalPosts() != null) {
@@ -132,7 +135,11 @@ public class ParlerScraping {
     }
 
     private void scrapeUser(ParlerUser user, boolean skipIfExists) {
-        scrapeUsername(user.getUsername(), skipIfExists, String.format("score=%,d", user.getScore()));
+        String debug = String.format("score=%,d", user.getScore());
+        if (user.getPosts() != null) {
+            debug += String.format(", posts=%,d", user.getPosts());
+        }
+        scrapeUsername(user.getUsername(), skipIfExists, debug);
     }
 
     private void scrapeUsername(String username, boolean skipIfExists, String debugInfo) {
@@ -170,7 +177,7 @@ public class ParlerScraping {
         if (joinedTime != null && start.compareTo(joinedTime) < 0) {
             start = joinedTime;
         }
-        
+
         // Use the user's joined time for followers and following
         ParlerTime earliest = joinedTime != null ? joinedTime : startTime;
 
@@ -234,16 +241,24 @@ public class ParlerScraping {
     }
 
     private ParlerUser getWeightedRandomUser() {
-        List<ParlerUser> allNotWorthlessUsers = db.getAllPublicNotWorthlessUsers();
+        List<ParlerUser> allNotWorthlessUsers = db.getAllPublicNotWorthlessUsers(MINIMUM_POSTS);
+
+        SimpleRegression scoreToPosts = new SimpleRegression();
+        int nonNull = 0;
+        for (ParlerUser user : allNotWorthlessUsers) {
+            if (user.getPosts() != null) {
+                nonNull++;
+                scoreToPosts.addData(user.getScore(), user.getPosts());
+            }
+        }
+
+        final int nonNullF = nonNull;
         List<Pair<ParlerUser, Double>> userWeights = allNotWorthlessUsers.stream()
-                .map(i -> new Pair<ParlerUser, Double>(i, weighUser(i)))
+                .map(i -> new Pair<ParlerUser, Double>(i, weighUser(i, scoreToPosts, nonNullF)))
+                .filter(htp -> htp.getSecond() > Double.NEGATIVE_INFINITY)
                 .collect(Collectors.toList());
 
         return new EnumeratedDistribution<>(userWeights).sample();
-    }
-
-    private double weighUser(ParlerUser i) {
-        return Math.log(i.getScore());
     }
 
     // TODO: Random user selection should only select users who existed before the endDate
@@ -315,6 +330,21 @@ public class ParlerScraping {
             }
         }
         return totalPosts <= 0 ? Double.NEGATIVE_INFINITY : Math.log(totalPosts);
+    }
+
+    private double weighUser(ParlerUser user, SimpleRegression scoreToPosts, int nonNull) {
+        Long totalPosts = user.getPosts();
+        if (totalPosts == null) {
+            long score = user.getScore();
+            if (nonNull > 1) {
+                totalPosts = (long) scoreToPosts.predict(score) * UNENCOUNTERED_BIAS;
+            } else {
+                totalPosts = score * UNENCOUNTERED_BIAS;
+            }
+        } else if (totalPosts < MINIMUM_POSTS) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        return Math.max(Math.log(totalPosts), 20);
     }
 
     public void stop() {

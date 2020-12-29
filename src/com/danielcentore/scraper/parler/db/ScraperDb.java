@@ -16,6 +16,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import com.danielcentore.scraper.parler.Main;
+import com.danielcentore.scraper.parler.ParlerScraping;
 import com.danielcentore.scraper.parler.api.ParlerTime;
 import com.danielcentore.scraper.parler.api.ScrapeType;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
@@ -275,8 +276,10 @@ public class ScraperDb {
     }
 
     @SuppressWarnings("unchecked")
-    public List<ParlerUser> getAllPublicNotWorthlessUsers() {
-        return session.createQuery("FROM ParlerUser U WHERE U.score > 0 AND U.privateAccount = 0").getResultList();
+    public List<ParlerUser> getAllPublicNotWorthlessUsers(long minPosts) {
+        return session.createQuery("FROM ParlerUser U WHERE U.privateAccount = 0 AND (U.posts is null OR U.posts > :minPosts)")
+                .setParameter("minPosts", minPosts)
+                .getResultList();
     }
 
     @SuppressWarnings("unchecked")
@@ -304,8 +307,6 @@ public class ScraperDb {
     public void updateStatusArea() {
         long totalUsers = (long) session.createQuery("SELECT count(*) FROM ParlerUser")
                 .getSingleResult();
-        long scoresGreaterZero = (long) session.createQuery("SELECT count(*) FROM ParlerUser U WHERE U.score > 0")
-                .getSingleResult();
         long totalPosts = (long) session.createQuery("SELECT count(*) FROM ParlerPost")
                 .getSingleResult();
         long totalHashtags = (long) session.createQuery("SELECT count(*) FROM ParlerHashtag")
@@ -324,15 +325,11 @@ public class ScraperDb {
         String text = String.format(
                 "Total Posts: %d\n"
                         + "Total Users: %d\n"
-                        + TAB + "Scores >0: %d\n"
-                        + TAB + "Scores \u22640: %d\n"
                         + "Total Hashtags: %d\n"
                         + "\n"
                         + "Posts (%s thru %s): %s\n",
                 totalPosts,
                 totalUsers,
-                scoresGreaterZero,
-                totalUsers - scoresGreaterZero,
                 totalHashtags,
                 startTime == null ? "n/a" : startTime.toSimpleDateFormat(),
                 endTime == null ? "n/a" : endTime.toSimpleDateFormat(),
