@@ -6,6 +6,7 @@ import org.hibernate.cfg.NotYetImplementedException;
 
 import com.danielcentore.scraper.parler.api.ParlerClient;
 import com.danielcentore.scraper.parler.api.ParlerTime;
+import com.danielcentore.scraper.parler.api.ScrapeType;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
 import com.danielcentore.scraper.parler.api.components.ParlerHashtag;
@@ -65,6 +66,8 @@ public class ParlerScraping {
     }
 
     private void scrapeHashtag(String hashtag, boolean skipIfExists) {
+        hashtag = hashtag.toLowerCase();
+
         gui.println("Scraping #" + hashtag);
 
         if (skipIfExists) {
@@ -76,12 +79,12 @@ public class ParlerScraping {
         }
 
         gui.println(TAB + "Fetching from API...");
-        // TODO: Random time!!!!!!!!!!!!
         PagedParlerPosts hashtagPosts = client.fetchPagedHashtag(hashtag);
 
         gui.println(TAB + "Storing in local DB...");
         db.storePagedPosts(hashtagPosts);
         db.storeHashtagTotalPostCount(hashtag, hashtagPosts.getTotalPosts());
+        db.storeScrapedRange(ScrapeType.HASHTAG_POSTS, hashtag, hashtagPosts);
 
         gui.println(TAB + "Done.");
     }
@@ -114,6 +117,7 @@ public class ParlerScraping {
         } else {
             gui.println(TAB + "Using fully scanned profile from local DB");
         }
+        String userId = profile.getParlerId();
 
         if (stopRequested) {
             return;
@@ -125,6 +129,7 @@ public class ParlerScraping {
             int postCount = pagedPosts.getPostCount();
             gui.println(TAB + "Storing " + postCount + " posts in local DB...");
             db.storePagedPosts(pagedPosts);
+            db.storeScrapedRange(ScrapeType.USER_POSTS, userId, pagedPosts);
         }
 
         if (stopRequested) {
@@ -137,6 +142,7 @@ public class ParlerScraping {
             int followingCount = pagedFollowing.getUsers().size();
             gui.println(TAB + "Storing " + followingCount + " followees in local DB...");
             db.storePagedUsers(pagedFollowing);
+            db.storeScrapedRange(ScrapeType.USER_FOLLOWEES, userId, pagedFollowing);
         }
 
         if (stopRequested) {
@@ -149,6 +155,7 @@ public class ParlerScraping {
             int followersCount = pagedFollowers.getUsers().size();
             gui.println(TAB + "Storing " + followersCount + " followers in local DB...");
             db.storePagedUsers(pagedFollowers);
+            db.storeScrapedRange(ScrapeType.USER_FOLLOWERS, userId, pagedFollowers);
         }
 
         gui.println(TAB + "Done.");

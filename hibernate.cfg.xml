@@ -14,5 +14,6 @@
         <mapping class="com.danielcentore.scraper.parler.api.components.ParlerPost"/>
         <mapping class="com.danielcentore.scraper.parler.api.components.ParlerLink"/>
         <mapping class="com.danielcentore.scraper.parler.api.components.ParlerHashtag"/>
+        <mapping class="com.danielcentore.scraper.parler.api.components.ScrapedRange"/>
     </session-factory>
 </hibernate-configuration>

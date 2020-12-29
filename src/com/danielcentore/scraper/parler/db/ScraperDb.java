@@ -16,12 +16,16 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import com.danielcentore.scraper.parler.Main;
+import com.danielcentore.scraper.parler.api.ParlerTime;
+import com.danielcentore.scraper.parler.api.ScrapeType;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
+import com.danielcentore.scraper.parler.api.components.PagedParlerResponse;
 import com.danielcentore.scraper.parler.api.components.PagedParlerUsers;
 import com.danielcentore.scraper.parler.api.components.ParlerHashtag;
 import com.danielcentore.scraper.parler.api.components.ParlerLink;
 import com.danielcentore.scraper.parler.api.components.ParlerPost;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
+import com.danielcentore.scraper.parler.api.components.ScrapedRange;
 import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 
 /**
@@ -233,6 +237,12 @@ public class ScraperDb {
                 }
             }
         }
+        endTransaction();
+    }
+
+    public void storeScrapedRange(ScrapeType scrapedType, String scrapedId, PagedParlerResponse response) {
+        beginTransaction();
+        session.save(new ScrapedRange(scrapedType, scrapedId, response.getCurrentKey(), response.getNextKey()));
         endTransaction();
     }
 

@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -109,7 +112,12 @@ public class Main implements ICookiesListener {
                 gui.println("== Scraping: STARTED ==");
                 gui.setRunning(true);
 
-                scraper.scrape(finalStartTime, finalEndTime, getSeeds(seeds));
+                try {
+                    scraper.scrape(finalStartTime, finalEndTime, getSeeds(seeds));
+                } catch (Exception e) {
+                    gui.println("ERROR: " + e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
 
                 gui.println("== Scraping: STOPPED ==");
                 gui.setRunning(false);

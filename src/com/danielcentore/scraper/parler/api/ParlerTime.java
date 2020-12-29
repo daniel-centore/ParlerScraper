@@ -14,8 +14,7 @@ import java.util.GregorianCalendar;
  * @author Daniel Centore
  */
 public class ParlerTime implements Comparable<ParlerTime> {
-
-    final static DateFormat ISO8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    final static DateFormat ISO8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     final int year;
     final int month;
@@ -55,7 +54,17 @@ public class ParlerTime implements Comparable<ParlerTime> {
         String extended = "0";
         Calendar calendar = new GregorianCalendar();
         if (split.length == 1) {
-            calendar.setTimeInMillis(Long.parseLong(parlerTimestamp));
+            try {
+                calendar.setTimeInMillis(Long.parseLong(parlerTimestamp));
+            } catch (NumberFormatException e) {
+                try {
+                    Date parsedTime = ISO8601_FORMAT.parse(parlerTimestamp);
+                    calendar.setTime(parsedTime);
+                } catch (ParseException e2) {
+                    throw new RuntimeException(e2);
+                }
+            }
+            
         } else if (split.length == 2) {
             String iso8601 = split[0];
             extended = split[1];
