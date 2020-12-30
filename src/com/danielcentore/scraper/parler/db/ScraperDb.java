@@ -16,7 +16,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import com.danielcentore.scraper.parler.Main;
-import com.danielcentore.scraper.parler.ParlerScraping;
+import com.danielcentore.scraper.parler.PUtils;
 import com.danielcentore.scraper.parler.api.ParlerTime;
 import com.danielcentore.scraper.parler.api.ScrapeType;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
@@ -37,6 +37,8 @@ import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 public class ScraperDb {
 
     public static final String TAB = Main.TAB;
+    
+    public static final int DB_FAIL_TIME_MS = 1000;
 
     private Session session;
     private ParlerScraperGui gui;
@@ -62,7 +64,7 @@ public class ScraperDb {
     public void updateStartEndTime(ParlerTime startTime, ParlerTime endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
-        
+
         updateStatusArea();
     }
 
@@ -94,14 +96,24 @@ public class ScraperDb {
             }
         }
 
-        beginTransaction();
-        for (ParlerLink link : links) {
-            if (existingLinks.containsKey(link.getLinkId())) {
-                session.detach(existingLinks.get(link.getLinkId()));
+        while (true) {
+            try {
+                beginTransaction();
+                for (ParlerLink link : links) {
+                    if (existingLinks.containsKey(link.getLinkId())) {
+                        session.detach(existingLinks.get(link.getLinkId()));
+                    }
+                    session.saveOrUpdate(link);
+                }
+                endTransaction();
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+                gui.println("> Local DB transaction failed, retrying...");
+                PUtils.sleep(DB_FAIL_TIME_MS);
+                break;
             }
-            session.saveOrUpdate(link);
         }
-        endTransaction();
     }
 
     public void storePagedUsers(PagedParlerUsers pagedUsers) {
@@ -129,14 +141,24 @@ public class ScraperDb {
             }
         }
 
-        beginTransaction();
-        for (ParlerPost post : posts) {
-            if (existingPosts.containsKey(post.getParlerId())) {
-                session.detach(existingPosts.get(post.getParlerId()));
+        while (true) {
+            try {
+                beginTransaction();
+                for (ParlerPost post : posts) {
+                    if (existingPosts.containsKey(post.getParlerId())) {
+                        session.detach(existingPosts.get(post.getParlerId()));
+                    }
+                    session.saveOrUpdate(post);
+                }
+                endTransaction();
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+                gui.println("> Local DB transaction failed, retrying...");
+                PUtils.sleep(DB_FAIL_TIME_MS);
+                break;
             }
-            session.saveOrUpdate(post);
         }
-        endTransaction();
     }
 
     public void storeHashtags(Collection<ParlerPost> posts) {
@@ -171,15 +193,25 @@ public class ScraperDb {
             existingHashtags.put(pht.getHashtag(), pht);
         }
 
-        beginTransaction();
-        for (String hashtag : hashTagsAdded.keySet()) {
-            ParlerHashtag parlerHashtag = existingHashtags.containsKey(hashtag)
-                    ? existingHashtags.get(hashtag)
-                    : new ParlerHashtag(hashtag);
-            parlerHashtag.setEncounters(parlerHashtag.getEncounters() + hashTagsAdded.get(hashtag));
-            session.saveOrUpdate(parlerHashtag);
+        while (true) {
+            try {
+                beginTransaction();
+                for (String hashtag : hashTagsAdded.keySet()) {
+                    ParlerHashtag parlerHashtag = existingHashtags.containsKey(hashtag)
+                            ? existingHashtags.get(hashtag)
+                            : new ParlerHashtag(hashtag);
+                    parlerHashtag.setEncounters(parlerHashtag.getEncounters() + hashTagsAdded.get(hashtag));
+                    session.saveOrUpdate(parlerHashtag);
+                }
+                endTransaction();
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+                gui.println("> Local DB transaction failed, retrying...");
+                PUtils.sleep(DB_FAIL_TIME_MS);
+                break;
+            }
         }
-        endTransaction();
     }
 
     public void storeHashtagTotalPostCount(String hashtag, Long totalPosts) {
@@ -188,9 +220,20 @@ public class ScraperDb {
             parlerHashtag = new ParlerHashtag(hashtag);
         }
         parlerHashtag.setTotalPosts(totalPosts);
-        beginTransaction();
-        session.saveOrUpdate(parlerHashtag);
-        endTransaction();
+
+        while (true) {
+            try {
+                beginTransaction();
+                session.saveOrUpdate(parlerHashtag);
+                endTransaction();
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+                gui.println("> Local DB transaction failed, retrying...");
+                PUtils.sleep(DB_FAIL_TIME_MS);
+                break;
+            }
+        }
     }
 
     public ParlerHashtag getParlerHashtag(String hashtag) {
@@ -238,46 +281,68 @@ public class ScraperDb {
             }
         }
 
-        beginTransaction();
-        for (ParlerUser user : users) {
-            ParlerUser existingUser = existingUsers.get(user.getParlerId());
+        while (true) {
+            try {
+                beginTransaction();
+                for (ParlerUser user : users) {
+                    ParlerUser existingUser = existingUsers.get(user.getParlerId());
 
-            if (existingUser == null) {
-                // User not yet in db
-                session.save(user);
-            } else {
-                session.detach(existingUser);
-                if (!existingUser.isFullyScanned()) {
-                    // User in db but is not fully scanned, so update it
-                    session.update(user);
-                } else if (existingUser.isFullyScanned() && user.isFullyScanned()) {
-                    // User in db and fully scanned, but so is the new one, so update it
-                    session.update(user);
+                    if (existingUser == null) {
+                        // User not yet in db
+                        session.save(user);
+                    } else {
+                        session.detach(existingUser);
+                        if (!existingUser.isFullyScanned()) {
+                            // User in db but is not fully scanned, so update it
+                            session.update(user);
+                        } else if (existingUser.isFullyScanned() && user.isFullyScanned()) {
+                            // User in db and fully scanned, but so is the new one, so update it
+                            session.update(user);
+                        }
+                    }
                 }
+                endTransaction();
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+                gui.println("> Local DB transaction failed, retrying...");
+                PUtils.sleep(DB_FAIL_TIME_MS);
+                break;
             }
         }
-        endTransaction();
     }
 
     public void storeScrapedRange(ScrapeType scrapedType,
             String scrapedId,
             ParlerTime startTime,
             PagedParlerResponse response) {
-        beginTransaction();
-        session.save(new ScrapedRange(
-                scrapedType,
-                scrapedId,
-                startTime,
-                // If the scrape failed, mark everything as occupied from start of time to the request
-                response == null ? ParlerTime.fromUnixTimestampMs(0L) : response.getNextKey(),
-                response != null,
-                ParlerTime.now().toParlerTimestamp()));
-        endTransaction();
+        while (true) {
+            try {
+                beginTransaction();
+                session.save(new ScrapedRange(
+                        scrapedType,
+                        scrapedId,
+                        startTime,
+                        // If the scrape failed, mark everything as occupied from start of time to the request
+                        response == null ? ParlerTime.fromUnixTimestampMs(0L) : response.getNextKey(),
+                        response != null,
+                        ParlerTime.now().toParlerTimestamp()));
+                endTransaction();
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+                gui.println("> Local DB transaction failed, retrying...");
+                PUtils.sleep(DB_FAIL_TIME_MS);
+                break;
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
     public List<ParlerUser> getAllPublicNotWorthlessUsers(long minPosts) {
-        return session.createQuery("FROM ParlerUser U WHERE U.privateAccount = 0 AND (U.posts is null OR U.posts > :minPosts)")
+        return session
+                .createQuery(
+                        "FROM ParlerUser U WHERE U.privateAccount = 0 AND (U.posts is null OR U.posts > :minPosts)")
                 .setParameter("minPosts", minPosts)
                 .getResultList();
     }
@@ -296,7 +361,12 @@ public class ScraperDb {
     }
 
     public void beginTransaction() {
-        session.beginTransaction();
+        try {
+            session.beginTransaction();
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.getTransaction().rollback();
+        }
     }
 
     public void endTransaction() {
