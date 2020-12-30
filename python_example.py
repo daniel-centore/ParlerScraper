@@ -20,6 +20,9 @@ posts_dec_2020_df = pd.read_sql_query("SELECT * from posts WHERE created_at >= '
 users_non_private = pd.read_sql_query("SELECT * from users WHERE private_account != 1", con)
 users_verified = pd.read_sql_query("SELECT * from users WHERE verified = 1", con)
 
+# Close the connection when complete
+con.close()
+
 # Adjust printing settings
 pd.set_option('display.width', 150)
 pd.set_option('display.max_colwidth', 10)
@@ -49,6 +52,3 @@ print(users_non_private.head())
 
 print("\n\n\nVerified users")
 print(users_verified.head())
-
-# Close the connection when complete
-con.close()

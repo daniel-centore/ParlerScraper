@@ -58,7 +58,7 @@ public class ParlerScraping {
         this.endTime = endTime;
 
         gui.println("Scraping from " + startTime.toSimpleDateTimeMsFormat() + " thru "
-                + endTime.toSimpleDateTimeMsFormat());
+                + endTime.toSimpleDateTimeMsFormat() + " UTC");
 
         gui.println("######################");
         gui.println("### Scraping Seeds ###");
@@ -155,6 +155,11 @@ public class ParlerScraping {
 
         gui.println(TAB + "Fetching profile from API...");
         ParlerUser profile = client.fetchProfile(username);
+        
+        if (profile == null) {
+            gui.println(TAB + "Failed to fetch @" + username + "; skipping...");
+            return;
+        }
 
         gui.println(TAB + "Storing profile in local DB...");
         db.storeUser(profile);
