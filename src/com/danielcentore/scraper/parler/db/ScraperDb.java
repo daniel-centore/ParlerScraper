@@ -383,13 +383,13 @@ public class ScraperDb {
                     .setParameter("min", this.startTime.toParlerCompressedTimestamp())
                     .setParameter("max", this.endTime.toParlerCompressedTimestamp())
                     .getSingleResult();
-            inDateRange = totalPostsInDateRange + "";
+            inDateRange = String.format("%,d", totalPostsInDateRange);
         }
 
         String text = String.format(
-                "Total Posts: %d\n"
-                        + "Total Users: %d\n"
-                        + "Total Hashtags: %d\n"
+                "Total Posts: %,d\n"
+                        + "Total Users: %,d\n"
+                        + "Total Hashtags: %,d\n"
                         + "\n"
                         + "Posts (%s thru %s): %s\n",
                 totalPosts,

@@ -94,7 +94,7 @@ public class ParlerScraping {
             ParlerHashtag hashtag = getWeightedRandomHashtag();
             String htDebug = String.format("encounters=%,d", hashtag.getEncounters());
             if (hashtag.getTotalPosts() != null) {
-                htDebug += String.format("; posts=%d", hashtag.getTotalPosts());
+                htDebug += String.format("; posts=%,d", hashtag.getTotalPosts());
             }
             scrapeHashtag(hashtag.getHashtag(), false, htDebug);
         }
