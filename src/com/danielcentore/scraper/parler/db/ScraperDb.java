@@ -111,7 +111,6 @@ public class ScraperDb {
                 e.printStackTrace();
                 gui.println("> Local DB transaction failed, retrying...");
                 PUtils.sleep(DB_FAIL_TIME_MS);
-                break;
             }
         }
     }
@@ -156,7 +155,6 @@ public class ScraperDb {
                 e.printStackTrace();
                 gui.println("> Local DB transaction failed, retrying...");
                 PUtils.sleep(DB_FAIL_TIME_MS);
-                break;
             }
         }
     }
@@ -209,7 +207,6 @@ public class ScraperDb {
                 e.printStackTrace();
                 gui.println("> Local DB transaction failed, retrying...");
                 PUtils.sleep(DB_FAIL_TIME_MS);
-                break;
             }
         }
     }
@@ -231,7 +228,6 @@ public class ScraperDb {
                 e.printStackTrace();
                 gui.println("> Local DB transaction failed, retrying...");
                 PUtils.sleep(DB_FAIL_TIME_MS);
-                break;
             }
         }
     }
@@ -307,7 +303,6 @@ public class ScraperDb {
                 e.printStackTrace();
                 gui.println("> Local DB transaction failed, retrying...");
                 PUtils.sleep(DB_FAIL_TIME_MS);
-                break;
             }
         }
     }
@@ -333,7 +328,6 @@ public class ScraperDb {
                 e.printStackTrace();
                 gui.println("> Local DB transaction failed, retrying...");
                 PUtils.sleep(DB_FAIL_TIME_MS);
-                break;
             }
         }
     }
