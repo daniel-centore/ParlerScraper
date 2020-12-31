@@ -1,5 +1,7 @@
 # ParlerScraper
-ParlerScraper is a tool for scraping a pseudo-random set of Parler posts. The main goal here is to make this data available for researchers.
+ParlerScraper is a tool for scraping a pseudo-random sample of Parler posts. The main goal here is to make this data available for researchers.
+
+![Screenshot](screenshots/screenshot1.png)
 
 This tool is provided AS-IS. It uses the internal, undocumented Parler API, and might stop working at any moment. US law generally protects reverse engineering non-public APIs so long as the purpose itself is legal (not, e.g., for bypassing a paid service), but laws may vary in your jurisdiction.
 
