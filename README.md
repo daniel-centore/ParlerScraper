@@ -116,7 +116,7 @@ A json list of numbers corresponding to badges on users' profiles. Here are what
   * 9 - Early Parley-er: This individual joined Parler and was active very early in Parler's life.
 * `banned` (boolean: `0` or `1`)\
 Whether or not this user has been banned
-* `bio` (e.g. `Trump 2016-2024`)\
+* `bio` (e.g. `Father of 2. Lover of God #maga #trump2020`)\
 The user's bio on their profile
 * `blocked` (boolean: `0` or `1`)\
 Whether or not you have blocked this user
@@ -128,12 +128,12 @@ Parler ID of the user's cover photo
 Do you follow this user?
 * `followers` (e.g. `39000`)\
 The number of people who follow this user
-* `following` (e.g. `39000`)
+* `following` (e.g. `39000`)\
 The number of people this user follows
 * `human` (boolean: `0` or `1`)\
-Unclear - often `0` for users who are definitely human
+This seems to be identical to Badge 0
 * `integration` (boolean: `0` or `1`)\
-Unclear - in all samples seen so far this is `false` (i.e. `0`)
+This seems to be identical to Badge 2
 * `interactions` (e.g. `6247`)\
 Unclear. Over half of users have values of either 258 or 259. The values are almost all slightly above a power of 2, suggesting this might be some kind of bitfield which usually has a small number of bits set.
 * `is_following_you` (boolean: `0` or `1`)\
@@ -187,7 +187,7 @@ Parler Id of the user who created the post
 * `depth` (e.g. `4`)\
 A string version of depth_raw. I have no examples of them differing and it's unclear why there is both a string and int version.
 * `depth_raw` (e.g. `4`)\
-A share has a depth of 0. A reshare has a depth of 1. A reshare of a reshare has a depth of 2. Etc. For depth 1, the parent_id is set but not the root. For depth >=2, the parent represents what this post is a reshare of and the root represents the very first post shared in the chain.
+A share has a depth of 0. A reshare has a depth of 1. A reshare of a reshare has a depth of 2. Etc. For depth 1, the parent_id is set but not the root. For `depth` >=2, the parent represents what this post is a reshare of and the root represents the very first post shared in the chain.
 * `hashtags` (e.g. `["maga2020","maga","electionintegrity"]`)\
 A json list of hashtags used in the post
 * `impressions` (e.g. `12000`)\
@@ -203,7 +203,7 @@ A shortened version of body (e.g. `We need @chiproytx back`)
 * `reposts` (e.g. `258`)\
 The number of times this has been reposted
 * `root_id` (e.g. `10131a54d6074b7e95470727555ec865`)\
-When depth >= 2, this is the original post in a chain of reshares. Otherwise, null.
+When `depth` >= 2, this is the original post in a chain of reshares. Otherwise, null.
 * `sensitive` (boolean: `0` or `1`)\
 Nominally setting this to `1` means that the content can only be viewed if "Hide Sensitive Content" is manually turned off in the Moderation pane under the hamburger menu. Even when I adjust this setting though, I still can't view the content, with an error saying it's sensitive. However, reshares of the post are visible either way. Wtf.
 * `share_link` (e.g. `https://parler.com/post/b726e8115d8948f3a72481d3a8f69be6`)\
