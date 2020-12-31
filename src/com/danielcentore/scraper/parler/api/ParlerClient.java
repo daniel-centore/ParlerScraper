@@ -47,6 +47,8 @@ public class ParlerClient {
     private String jst;
 
     private ParlerScraperGui gui;
+    
+    private volatile boolean stopRequested = false;
 
     public ParlerClient(String mst, String jst, ParlerScraperGui gui) {
         this.mst = mst;
@@ -56,7 +58,8 @@ public class ParlerClient {
     }
 
     public String issueRequest(String referrer, String endpoint) throws InterruptedIOException {
-
+        stopRequested = false;
+        
         int attempt = 0;
         long waitTime = 1000 + random.nextInt(1500);
 
@@ -78,7 +81,7 @@ public class ParlerClient {
 
                 return json;
             } catch (Exception e) {
-                if (Thread.interrupted()) {
+                if (stopRequested) {
                     gui.println("> Stop button pushed; terminating network operation");
                     throw new InterruptedIOException();
                 }
@@ -275,6 +278,10 @@ public class ParlerClient {
 
     public void addCookieListener(ICookiesListener listener) {
         cookiesListeners.add(listener);
+    }
+    
+    public void stop() {
+        this.stopRequested = true;
     }
 
 }

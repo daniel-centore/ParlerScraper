@@ -31,7 +31,7 @@ public class Main implements ICookiesListener {
     ScraperDb scraperDb;
     ParlerClient client;
     ParlerScraping scraper;
-    private volatile Future<?> currentTask;
+    private Future<?> currentTask;
 
     public Main() {
         String mst = "";
@@ -149,6 +149,8 @@ public class Main implements ICookiesListener {
 
     public void stopPostScrapeBtn() {
         gui.println("> Finishing up, one moment...");
+        scraper.stop();
+        client.stop();
         currentTask.cancel(true);
     }
 
