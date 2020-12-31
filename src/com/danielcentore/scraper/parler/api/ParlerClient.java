@@ -1,7 +1,9 @@
 package com.danielcentore.scraper.parler.api;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketTimeoutException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +55,7 @@ public class ParlerClient {
         this.gui = gui;
     }
 
-    public String issueRequest(String referrer, String endpoint) {
+    public String issueRequest(String referrer, String endpoint) throws InterruptedIOException {
 
         int attempt = 0;
         long waitTime = 1000 + random.nextInt(1500);
@@ -75,8 +77,13 @@ public class ParlerClient {
                 PUtils.sleep(waitTime);
 
                 return json;
+            } catch (InterruptedIOException e) {
+                // Someone clicked the stop button
+                throw e;
             } catch (Exception e) {
-                e.printStackTrace();
+                if (!(e instanceof SocketTimeoutException)) {
+                    e.printStackTrace();
+                }
                 attempt++;
                 gui.println("> API REQUEST ATTEMPT " + attempt + " FAILED: " + e.getLocalizedMessage());
                 gui.println("> Endpoint: " + endpoint);
@@ -135,11 +142,14 @@ public class ParlerClient {
         return response;
     }
 
-    public ParlerUser fetchProfile(String username) {
+    public ParlerUser fetchProfile(String username) throws InterruptedIOException {
         String eUsername = urlencode(username);
         String response = issueRequest(
                 "profile/" + eUsername + "/posts",
                 "v1/profile?username=" + eUsername);
+        if (response == null) {
+            return null;
+        }
         try {
             return mapper.readValue(response, ParlerUser.class)
                     .setFullyScanned();
@@ -149,13 +159,16 @@ public class ParlerClient {
         return null;
     }
 
-    public PagedParlerPosts fetchPagedPosts(ParlerUser user) {
+    public PagedParlerPosts fetchPagedPosts(ParlerUser user) throws InterruptedIOException {
         return fetchPagedPosts(user, null);
     }
 
-    public PagedParlerPosts fetchPagedPosts(ParlerUser user, ParlerTime start) {
+    public PagedParlerPosts fetchPagedPosts(ParlerUser user, ParlerTime start) throws InterruptedIOException {
         String response = fetchPagedUserResponse("profile/" + user.getUrlEncodedUsername() + "/posts",
                 "v1/post/creator", user, start);
+        if (response == null) {
+            return null;
+        }
 
         try {
             return mapper.readValue(response, PagedParlerPosts.class);
@@ -166,11 +179,11 @@ public class ParlerClient {
         return null;
     }
 
-    public PagedParlerUsers fetchFollowing(ParlerUser user) {
+    public PagedParlerUsers fetchFollowing(ParlerUser user) throws InterruptedIOException {
         return fetchFollowing(user, null);
     }
 
-    public PagedParlerUsers fetchFollowing(ParlerUser user, ParlerTime start) {
+    public PagedParlerUsers fetchFollowing(ParlerUser user, ParlerTime start) throws InterruptedIOException {
         String eParlerId = user.getUrlEncodedParlerId();
         return fetchPagedUsers(String.format(
                 "profile/%s/following", eParlerId),
@@ -179,11 +192,11 @@ public class ParlerClient {
                 start);
     }
 
-    public PagedParlerUsers fetchFollowers(ParlerUser user) {
+    public PagedParlerUsers fetchFollowers(ParlerUser user) throws InterruptedIOException {
         return fetchFollowers(user, null);
     }
 
-    public PagedParlerUsers fetchFollowers(ParlerUser user, ParlerTime start) {
+    public PagedParlerUsers fetchFollowers(ParlerUser user, ParlerTime start) throws InterruptedIOException {
         String eParlerId = user.getUrlEncodedParlerId();
         return fetchPagedUsers(String.format(
                 "profile/%s/followers", eParlerId),
@@ -192,8 +205,12 @@ public class ParlerClient {
                 start);
     }
 
-    public PagedParlerUsers fetchPagedUsers(String referrer, String endpointBase, ParlerUser user, ParlerTime start) {
+    public PagedParlerUsers fetchPagedUsers(String referrer, String endpointBase, ParlerUser user, ParlerTime start)
+            throws InterruptedIOException {
         String response = fetchPagedUserResponse(referrer, "v1/follow/" + endpointBase, user, start);
+        if (response == null) {
+            return null;
+        }
 
         try {
             return mapper.readValue(response, PagedParlerUsers.class);
@@ -204,7 +221,8 @@ public class ParlerClient {
         return null;
     }
 
-    public String fetchPagedUserResponse(String referrer, String endpointBase, ParlerUser user, ParlerTime start) {
+    public String fetchPagedUserResponse(String referrer, String endpointBase, ParlerUser user, ParlerTime start)
+            throws InterruptedIOException {
         String eParlerId = user.getUrlEncodedParlerId();
 
         // The limit seems to be ignored. The web version always sets it to 10 so we do too.
@@ -216,11 +234,11 @@ public class ParlerClient {
         return issueRequest(referrer, endpoint);
     }
 
-    public PagedParlerPosts fetchPagedHashtag(String hashtag) {
+    public PagedParlerPosts fetchPagedHashtag(String hashtag) throws InterruptedIOException {
         return fetchPagedHashtag(hashtag, null);
     }
 
-    public PagedParlerPosts fetchPagedHashtag(String hashtag, ParlerTime start) {
+    public PagedParlerPosts fetchPagedHashtag(String hashtag, ParlerTime start) throws InterruptedIOException {
         if (hashtag.startsWith("#")) {
             hashtag = hashtag.substring(1);
         }
@@ -233,6 +251,9 @@ public class ParlerClient {
         }
 
         String response = issueRequest("search?hashtag=" + hashtag, endpoint);
+        if (response == null) {
+            return null;
+        }
 
         try {
             return mapper.readValue(response, PagedParlerPosts.class);

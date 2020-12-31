@@ -4,12 +4,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.swing.UIManager;
 
@@ -29,6 +31,7 @@ public class Main implements ICookiesListener {
     ScraperDb scraperDb;
     ParlerClient client;
     ParlerScraping scraper;
+    private Future<?> currentTask;
 
     public Main() {
         String mst = "";
@@ -102,11 +105,11 @@ public class Main implements ICookiesListener {
         endCal.add(Calendar.DAY_OF_MONTH, 1);
         endCal.add(Calendar.MILLISECOND, -1);
         endTime = ParlerTime.fromCalendar(endCal);
-        
+
         if (endTime.compareTo(ParlerTime.now()) > 0) {
             endTime = ParlerTime.now();
         }
-        
+
         scraperDb.updateStartEndTime(startTime, endTime);
 
         final ParlerTime finalStartTime = startTime;
@@ -118,6 +121,8 @@ public class Main implements ICookiesListener {
 
                 try {
                     scraper.scrape(finalStartTime, finalEndTime, getSeeds(seeds));
+                } catch (InterruptedIOException e) {
+                    // Stop button pressed
                 } catch (Exception e) {
                     gui.println("ERROR: " + e.getLocalizedMessage());
                     e.printStackTrace();
@@ -127,9 +132,9 @@ public class Main implements ICookiesListener {
                 gui.setRunning(false);
             }
         };
-        executor.submit(r);
+        currentTask = executor.submit(r);
     }
-    
+
     private List<String> getSeeds(String seeds) {
         String[] split = seeds.split("\n");
         List<String> result = new ArrayList<>();
@@ -145,6 +150,7 @@ public class Main implements ICookiesListener {
     public void stopPostScrapeBtn() {
         gui.println("> Finishing up, one moment...");
         scraper.stop();
+        currentTask.cancel(true);
     }
 
     public static void main(String[] args) throws FileNotFoundException {

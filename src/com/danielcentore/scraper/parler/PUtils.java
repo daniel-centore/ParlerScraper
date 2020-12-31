@@ -2,7 +2,6 @@ package com.danielcentore.scraper.parler;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -53,11 +52,16 @@ public class PUtils {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 
-    // Based on https://www.geeksforgeeks.org/merging-intervals/
+    /**
+     * This takes a series of ranges and if any overlap, it merges them Based on
+     * https://www.geeksforgeeks.org/merging-intervals/
+     * 
+     * @param scrapedRanges
+     * @return
+     */
     public static List<TimeInterval> mergeScrapedRanges(List<ScrapedRange> scrapedRanges) {
         List<TimeInterval> ranges = new ArrayList<>();
         for (ScrapedRange r : scrapedRanges) {
@@ -67,12 +71,13 @@ public class PUtils {
         }
 
         // Test if the given set has at least one interval  
-        if (ranges.size() <= 0)
+        if (ranges.size() <= 0) {
             return new ArrayList<>();
+        }
 
         // Create an empty stack of intervals  
         Stack<TimeInterval> stack = new Stack<>();
-        
+
         // sort the intervals in increasing order of start time  
         Collections.sort(ranges, new Comparator<TimeInterval>() {
             @Override
@@ -89,14 +94,11 @@ public class PUtils {
             // get interval from stack top  
             TimeInterval top = stack.peek();
 
-            // if current interval is not overlapping with stack top,  
-            // push it to the stack  
-            if (top.max < ranges.get(i).min)
+            if (top.max < ranges.get(i).min) {
+                // if current interval is not overlapping with stack top, push it to the stack
                 stack.push(ranges.get(i));
-
-            // Otherwise update the ending time of top if ending of current  
-            // interval is more  
-            else if (top.max < ranges.get(i).max) {
+            } else if (top.max < ranges.get(i).max) {
+                // Otherwise update the ending time of top if ending of current interval is more
                 top.max = ranges.get(i).max;
                 stack.pop();
                 stack.push(top);
@@ -105,7 +107,6 @@ public class PUtils {
 
         return new ArrayList<>(stack);
     }
-
 }
 
 class TimeInterval {

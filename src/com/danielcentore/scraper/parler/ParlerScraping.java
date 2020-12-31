@@ -1,5 +1,6 @@
 package com.danielcentore.scraper.parler;
 
+import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,7 @@ public class ParlerScraping {
         this.gui = gui;
     }
 
-    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds) {
+    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds) throws InterruptedIOException {
         stopRequested = false;
 
         this.startTime = startTime;
@@ -100,7 +101,7 @@ public class ParlerScraping {
         }
     }
 
-    private void scrapeHashtag(String hashtag, boolean skipIfExists, String debug) {
+    private void scrapeHashtag(String hashtag, boolean skipIfExists, String debug) throws InterruptedIOException {
         hashtag = hashtag.toLowerCase();
 
         gui.println("Scraping #" + hashtag + " (" + debug + ")");
@@ -130,7 +131,7 @@ public class ParlerScraping {
         gui.println(TAB + "Done.");
     }
 
-    private void scrapeUser(ParlerUser user, boolean skipIfExists) {
+    private void scrapeUser(ParlerUser user, boolean skipIfExists) throws InterruptedIOException {
         String debug = String.format("score=%,d", user.getScore());
         if (user.getPosts() != null) {
             debug += String.format(", posts=%,d", user.getPosts());
@@ -138,7 +139,7 @@ public class ParlerScraping {
         scrapeUsername(user.getUsername(), skipIfExists, debug);
     }
 
-    private void scrapeUsername(String username, boolean skipIfExists, String debugInfo) {
+    private void scrapeUsername(String username, boolean skipIfExists, String debugInfo) throws InterruptedIOException {
         gui.println("Scraping @" + username + " (" + debugInfo + ")");
 
         if (skipIfExists) {
@@ -242,7 +243,11 @@ public class ParlerScraping {
     }
 
     private ParlerUser getWeightedRandomUser() {
-        List<ParlerUser> allNotWorthlessUsers = db.getAllPublicNotWorthlessUsers(MINIMUM_POSTS);
+        List<ParlerUser> allNotWorthlessUsers = db.getAllPublicNotWorthlessUsers(MINIMUM_POSTS)
+                .stream()
+                // Only include users who existed before the end date
+                .filter(user -> user.getJoinerParlerTime().compareTo(this.endTime) < 0)
+                .collect(Collectors.toList());
 
         SimpleRegression scoreToPosts = new SimpleRegression();
         int nonNull = 0;
@@ -261,8 +266,6 @@ public class ParlerScraping {
 
         return new EnumeratedDistribution<>(userWeights).sample();
     }
-
-    // TODO: Random user selection should only select users who existed before the endDate
 
     /**
      * Gets a random time for this particular query which is not within a range which has already been scraped (or
