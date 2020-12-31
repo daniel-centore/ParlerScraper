@@ -12,6 +12,7 @@ The sample WILL **NOT** BE A UNIFORM SAMPLE by pretty much any reasonable defini
 * If we sample a reshare, we add both the reshare and the earlier, original post to the data set.
 * We use heuristic biases when decising which users and hashtags to sample so that we are more likely to pick "popular" users and hashtags.
 * If the end user samples over multiple date ranges, this can introduce lots of non-uniformity to the data set.
+* We randomly select the time to scrape at with equal weight given to all times throughout the unscraped range. However, the API then returns some results from that time *and earlier*, giving a bit of a bias toward older things.
 
 Your best bet to get a reasonably uniform sample is probably to sample recent posts over a small time period (e.g. 1 week).
 
