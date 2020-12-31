@@ -44,8 +44,6 @@ public class ParlerScraping {
     private ParlerTime startTime;
     private ParlerTime endTime;
 
-    private volatile boolean stopRequested = false;
-
     public ParlerScraping(ScraperDb db, ParlerClient client, ParlerScraperGui gui) {
         this.db = db;
         this.client = client;
@@ -53,8 +51,6 @@ public class ParlerScraping {
     }
 
     public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds) throws InterruptedIOException {
-        stopRequested = false;
-
         this.startTime = startTime;
         this.endTime = endTime;
 
@@ -65,7 +61,7 @@ public class ParlerScraping {
         gui.println("### Scraping Seeds ###");
         gui.println("######################");
         for (String seed : seeds) {
-            if (stopRequested) {
+            if (Thread.interrupted()) {
                 return;
             }
 
@@ -82,13 +78,13 @@ public class ParlerScraping {
         gui.println("#########################");
         gui.println("### Scraping Randomly ###");
         gui.println("#########################");
-        while (!stopRequested) {
-            for (int i = 0; i < USERS_PER_HASHTAG && !stopRequested; ++i) {
-                ParlerUser user = getWeightedRandomUser();
-                scrapeUser(user, false);
-            }
+        while (!Thread.interrupted()) {
+//            for (int i = 0; i < USERS_PER_HASHTAG && !stopRequested; ++i) {
+//                ParlerUser user = getWeightedRandomUser();
+//                scrapeUser(user, false);
+//            }
             
-            if (stopRequested) {
+            if (Thread.interrupted()) {
                 return;
             }
 
@@ -150,7 +146,7 @@ public class ParlerScraping {
             }
         }
 
-        if (stopRequested) {
+        if (Thread.interrupted()) {
             return;
         }
 
@@ -167,7 +163,7 @@ public class ParlerScraping {
 
         String userId = profile.getParlerId();
 
-        if (stopRequested) {
+        if (Thread.interrupted()) {
             return;
         }
 
@@ -199,7 +195,7 @@ public class ParlerScraping {
             db.storeScrapedRange(ScrapeType.USER_POSTS, userId, randomTime, pagedPosts);
         }
 
-        if (stopRequested) {
+        if (Thread.interrupted()) {
             return;
         }
 
@@ -219,7 +215,7 @@ public class ParlerScraping {
             db.storeScrapedRange(ScrapeType.USER_FOLLOWEES, userId, randomTime, pagedFollowing);
         }
 
-        if (stopRequested) {
+        if (Thread.interrupted()) {
             return;
         }
 
@@ -349,9 +345,5 @@ public class ParlerScraping {
             return Double.NEGATIVE_INFINITY;
         }
         return Math.max(Math.log(totalPosts), 20);
-    }
-
-    public void stop() {
-        this.stopRequested = true;
     }
 }

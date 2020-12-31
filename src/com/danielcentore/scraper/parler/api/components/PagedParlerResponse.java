@@ -26,4 +26,8 @@ public class PagedParlerResponse extends ParlerResponse {
     public ParlerTime getNextKey() {
         return ParlerTime.fromParlerTimestamp(next);
     }
+    
+    public boolean getLast() {
+        return last == null ? false : last;
+    }
 }

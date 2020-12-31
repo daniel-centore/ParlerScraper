@@ -77,10 +77,11 @@ public class ParlerClient {
                 PUtils.sleep(waitTime);
 
                 return json;
-            } catch (InterruptedIOException e) {
-                // Someone clicked the stop button
-                throw e;
             } catch (Exception e) {
+                if (Thread.interrupted()) {
+                    gui.println("> Stop button pushed; terminating network operation");
+                    throw new InterruptedIOException();
+                }
                 if (!(e instanceof SocketTimeoutException)) {
                     e.printStackTrace();
                 }

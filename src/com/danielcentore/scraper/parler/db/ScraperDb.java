@@ -37,7 +37,7 @@ import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 public class ScraperDb {
 
     public static final String TAB = Main.TAB;
-    
+
     public static final int DB_FAIL_TIME_MS = 1000;
 
     private Session session;
@@ -311,6 +311,9 @@ public class ScraperDb {
             String scrapedId,
             ParlerTime startTime,
             PagedParlerResponse response) {
+        if (response != null && response.getLast()) {
+            gui.println("> Last pagination - marking as complete thru 1970");
+        }
         while (true) {
             try {
                 beginTransaction();
@@ -318,8 +321,10 @@ public class ScraperDb {
                         scrapedType,
                         scrapedId,
                         startTime,
-                        // If the scrape failed, mark everything as occupied from start of time to the request
-                        response == null ? ParlerTime.fromUnixTimestampMs(0L) : response.getNextKey(),
+                        // If the scrape failed or is the last, mark everything as occupied from start of time to the request
+                        (response == null || response.getLast())
+                                ? ParlerTime.fromUnixTimestampMs(0L)
+                                : response.getNextKey(),
                         response != null,
                         ParlerTime.now().toParlerTimestamp()));
                 endTransaction();
