@@ -83,10 +83,10 @@ public class ParlerScraping {
         gui.println("### Scraping Randomly ###");
         gui.println("#########################");
         while (!stopRequested) {
-//            for (int i = 0; i < USERS_PER_HASHTAG && !stopRequested; ++i) {
-//                ParlerUser user = getWeightedRandomUser();
-//                scrapeUser(user, false);
-//            }
+            for (int i = 0; i < USERS_PER_HASHTAG && !stopRequested; ++i) {
+                ParlerUser user = getWeightedRandomUser();
+                scrapeUser(user, false);
+            }
             
             if (stopRequested) {
                 return;
