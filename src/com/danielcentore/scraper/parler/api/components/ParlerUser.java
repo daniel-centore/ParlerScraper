@@ -303,7 +303,7 @@ public class ParlerUser extends ParlerResponse {
         this.rss = rss;
     }
 
-    @Column(name = "username", unique = true)
+    @Column(name = "username")
     public String getUsername() {
         return username;
     }

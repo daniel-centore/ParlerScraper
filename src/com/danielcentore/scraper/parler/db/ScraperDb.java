@@ -380,6 +380,8 @@ public class ScraperDb {
                 .getSingleResult();
         long totalHashtags = (long) session.createQuery("SELECT count(*) FROM ParlerHashtag")
                 .getSingleResult();
+        long uniquePostCreators = (long) session.createQuery("SELECT count(DISTINCT creator_id) FROM ParlerPost")
+                .getSingleResult();
 
         String inDateRange = "[Press Start to Update]";
         if (this.startTime != null && this.endTime != null) {
@@ -393,11 +395,13 @@ public class ScraperDb {
 
         String text = String.format(
                 "Total Posts: %,d\n"
+                        + TAB + "Distinct post creators: %,d\n"
                         + "Total Users: %,d\n"
                         + "Total Hashtags: %,d\n"
                         + "\n"
                         + "Posts (%s thru %s): %s\n",
                 totalPosts,
+                uniquePostCreators,
                 totalUsers,
                 totalHashtags,
                 startTime == null ? "n/a" : startTime.toSimpleDateFormat(),
