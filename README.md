@@ -50,7 +50,7 @@ NOTE: Make sure you have a stable internet connection! The software cannot curre
 * The results are automatically saved in the file `parler_scraper_database.db` in the same directory as the software.
 * If you want to do the equivalent of "Save as...", just copy the file somewhere else and rename it.
 * You can also delete the file from the original location and restart the application to force it to do a new scrape from scratch, instead of adding to existing data.
-* You can also manually delete all of the scrape ranges where `scrape_start` is NOT `1970-01-01T00:00:00.000Z_0` and all of the posts using a tool like "DB Browser for SQLite". This will give the software lots of user and hashtag seeds to choose from and also prevents it from trying to scrape hashtags and users from time ranges which we know cause the API to crash, while still giving you a fresh random sample.
+* You can also manually delete all of the scrape ranges where `scrape_successful=1` and all of the posts using a tool like "DB Browser for SQLite". This will give the software lots of user and hashtag seeds to choose from and also prevents it from trying to scrape hashtags and users from time ranges which we know cause the API to crash, while still giving you a fresh random sample.
 
 ## Accessing the Results
 
@@ -99,13 +99,13 @@ Each column inclues the column title, a description, and possibly 1 or more exam
 ### Users
 
 * `fully_scanned` (boolean: `0` or `1`)\
-Have we scanned this user fully yet? Many fields will be missing if not
+Has ParlerScraper fully scanned this user yet? Many fields will be missing if not
 * `id` (e.g. `4b8638eca2db4b17b3a7203e40ac8ce7`)\
 The unique ID used to represent the user in Parler's databases
 * `account_color` (e.g. `#a50202`)\
 Color of the user's profile
 * `badges` (e.g. `[0,2]`)\
-A json list of numbers corresponding to badges on users' profiles. Here are what the numbers correspond to (with descriptions from Parler's website):
+A json list of integers corresponding to badges on users' profiles. Here are what the numbers correspond to (with descriptions from Parler's website):
   * 0 - Verified Real Member: Parler Citizens are verified unique people in the Parler network. This does not mean the person is who they claim to be, just that they are Real People
   * 1 - Verified Influencer: People with a large following who have the potential to be targeted for impersonation, hacking or phishing campaigns. This badge is to protect the person’s authenticity and prove their identity to the community.
   * 2 - Parler Partner: Publisher uses Parler Commenting to import all articles, content and comments from their website community.

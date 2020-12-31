@@ -158,6 +158,8 @@ public class ParlerClient {
             return mapper.readValue(response, ParlerUser.class)
                     .setFullyScanned();
         } catch (Exception e) {
+            gui.println("> Failed to deserialize: " + e.getLocalizedMessage());
+            gui.println("> Response: " + response);
             e.printStackTrace();
         }
         return null;
@@ -177,6 +179,8 @@ public class ParlerClient {
         try {
             return mapper.readValue(response, PagedParlerPosts.class);
         } catch (Exception e) {
+            gui.println("> Failed to deserialize: " + e.getLocalizedMessage());
+            gui.println("> Response: " + response);
             e.printStackTrace();
         }
 
@@ -219,6 +223,8 @@ public class ParlerClient {
         try {
             return mapper.readValue(response, PagedParlerUsers.class);
         } catch (Exception e) {
+            gui.println("> Failed to deserialize: " + e.getLocalizedMessage());
+            gui.println("> Response: " + response);
             e.printStackTrace();
         }
 
@@ -262,6 +268,8 @@ public class ParlerClient {
         try {
             return mapper.readValue(response, PagedParlerPosts.class);
         } catch (Exception e) {
+            gui.println("> Failed to deserialize: " + e.getLocalizedMessage());
+            gui.println("> Response: " + response);
             e.printStackTrace();
         }
         return null;
