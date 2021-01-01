@@ -19,6 +19,7 @@ scraped_ranges_df = pd.read_sql_query("SELECT * from scraped_ranges", con)
 posts_dec_2020_df = pd.read_sql_query("SELECT * from posts WHERE created_at >= '20201201000000' AND created_at < '20210101000000'", con)
 users_non_private = pd.read_sql_query("SELECT * from users WHERE private_account != 1", con)
 users_verified = pd.read_sql_query("SELECT * from users WHERE verified = 1", con)
+posts_per_date = pd.read_sql_query("SELECT substr(created_at, 0, 9), COUNT(1) FROM posts GROUP BY 1 ORDER BY 1 DESC", con)
 
 # Close the connection when complete
 con.close()
@@ -52,3 +53,6 @@ print(users_non_private.head())
 
 print("\n\n\nVerified users")
 print(users_verified.head())
+
+print("\n\n\nNumber of posts from each date")
+print(posts_per_date.head())
