@@ -20,6 +20,7 @@ posts_dec_2020_df = pd.read_sql_query("SELECT * from posts WHERE created_at >= '
 users_non_private = pd.read_sql_query("SELECT * from users WHERE private_account != 1", con)
 users_verified = pd.read_sql_query("SELECT * from users WHERE verified = 1", con)
 posts_per_date = pd.read_sql_query("SELECT substr(created_at, 0, 9), COUNT(1) FROM posts GROUP BY 1 ORDER BY 1 DESC", con)
+post_body_and_author_username = pd.read_sql_query("SELECT posts.body, users.username FROM posts JOIN users ON posts.creator_id=users.id WHERE posts.body != ''", con)
 
 # Close the connection when complete
 con.close()
@@ -56,3 +57,7 @@ print(users_verified.head())
 
 print("\n\n\nNumber of posts from each date")
 print(posts_per_date.head())
+
+pd.set_option('display.max_colwidth', 90)
+print("\n\n\nPost Body and the Author's Username")
+print(post_body_and_author_username.head())
