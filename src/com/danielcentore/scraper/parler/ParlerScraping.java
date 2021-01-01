@@ -131,6 +131,14 @@ public class ParlerScraping {
         gui.println(TAB + "Done.");
     }
 
+    /**
+     * NOTE: If multiple users exist with the same username, this might update a different user with the same username
+     * instead
+     * 
+     * @param user
+     * @param skipIfExists
+     * @throws InterruptedIOException
+     */
     private void scrapeUser(ParlerUser user, boolean skipIfExists) throws InterruptedIOException {
         String debug = String.format("score=%,d", user.getScore());
         if (user.getPosts() != null) {

@@ -5,16 +5,14 @@ ParlerScraper is a tool for scraping a pseudo-random sample of Parler posts. The
 
 This tool is provided AS-IS. It uses the internal, undocumented Parler API, and might stop working at any moment. US law generally protects reverse engineering non-public APIs so long as the purpose itself is legal (not, e.g., for bypassing a paid service), but laws may vary in your jurisdiction.
 
-The sample WILL **NOT** BE A UNIFORM SAMPLE by pretty much any reasonable definition. Comparisons should generally be done as rate based (e.g. percent usage of x hashtag on two dates). A nonexhaustive list of some sources of bias:
+The sample WILL **NOT** BE A PERFECTLY UNIFORM SAMPLE. A nonexhaustive list of some sources of sampling bias:
 
 * We first randomly select a user and then the time to sample them at. If the user started existing halfway through the sample period, the randomly sampled time will only be selected from the period when that user actually existed, biasing the overall data set toward recency.
-* Popular hashtags (and users who post a very unhealthy amount) get failed queries when querying more than ~1 month in the past (it varies by post frequency). We thus only get posts from these for more recent days, biasing the overall data set toward recency.
-* If we sample a reshare, we add both the reshare and the earlier, original post to the data set.
-* We use heuristic biases when decising which users and hashtags to sample so that we are more likely to pick "popular" users and hashtags.
-* If the end user samples over multiple date ranges, this can introduce lots of non-uniformity to the data set.
-* We randomly select the time to scrape at with equal weight given to all times throughout the unscraped range. However, the API then returns some results from that time *and earlier*, giving a bit of a bias toward older things.
-
-Your best bet to get a reasonably uniform sample is probably to sample recent posts over a small time period (e.g. 1 week).
+* Popular hashtags (and users who post A TON) get failed queries when querying more than ~1 month in the past (it varies by post frequency). We thus only get posts from these for more recent days, biasing the overall data set toward recency.
+* If we sample a reshare, we add both the reshare and the earlier, original post to the data set. This increases the chances of getting older posts and posts which have been reshared many times.
+* We use heuristics when decising which users and hashtags to sample so that we are more likely to sample "popular" users and hashtags rather than users and hashtags with little content and little reach.
+* If the end user samples over multiple date ranges, this can introduce lots of non-uniformity to the data set. It might be better to rename or delete the database and sample new date ranges from scratch.
+* We randomly select the time to scrape at with equal weight given to all times throughout the unscraped range. However, the Parler API then returns results from that time *and earlier*, giving a bit of a bias toward older posts.
 
 Please analyze responsibly.
 
@@ -28,35 +26,31 @@ Please analyze responsibly.
 4. "See all cookies and site data"
 5. Search for "parler.com" 
 6. Open the parler.com item 
-7. Copy the mess of random characters from within `mst` and `jst` to the corresponding boxes in the Parler Scraper tool
+7. Copy the mess of random characters from within `mst` and `jst` content fields to the corresponding boxes in the Parler Scraper tool
 
-NOTE: If `jst` was missing, log out of parler and log back in, and repeat the above steps.
+NOTE: If the `jst` cookie is missing, log out of parler and log back in, and repeat the above steps.
 
 NOTE: Other browsers might format their cookies' content fields in different ways. We expect the format Chrome uses (i.e. urlencoded).
 
-These steps should not need to be repeated unless the mst is invalidated (e.g. if you log out of Parler from the browser).
+These steps should not need to be repeated unless the `mst` is invalidated (e.g. if you log out of Parler in the browser).
 
 ### Scraping a time range
 
-1. Set which seeds you'd like to use. The defaults are fine.
+1. Set the seeds you'd like to use. This is what we initially scrape and then branch out across the Parler network from there. The defaults should generally be fine.
 2. Type in your start and end dates you'd like to scrape. They are in the format YEAR-MONTH-DATE. (e.g. `2020-12-25` for 25 December, 2020)
 3. Click Start/Resume and it will run automatically until you turn it off.
 4. The software can be turned off and restarted at any point in the future.
 
-NOTE: Make sure you have a stable internet connection! The software cannot currently distinguish between the API crashing and you not having internet, so it may mark actually valid time ranges as invalid if you lose internet.
+NOTE: Make sure you have a stable internet connection! The software does not currently distinguish between the API crashing and you not having internet, so it may mark valid time ranges as invalid if you lose connectivity.
 
 ### Saving the results
 
 * The results are automatically saved in the file `parler_scraper_database.db` in the same directory as the software.
 * If you want to do the equivalent of "Save as...", just copy the file somewhere else and rename it.
 * You can also delete the file from the original location and restart the application to force it to do a new scrape from scratch, instead of adding to existing data.
-* You can also manually delete all of the scrape ranges where `scrape_successful=1` and all of the posts using a tool like "DB Browser for SQLite". This will give the software lots of user and hashtag seeds to choose from and also prevents it from trying to scrape hashtags and users from time ranges which we know cause the API to crash, while still giving you a fresh random sample.
+* You can also manually delete all of the scrape ranges where `scrape_successful=1` as well as all of the posts using a tool like "DB Browser for SQLite". This will give the software lots of user and hashtag seeds to choose from and also prevents it from trying to scrape hashtags and users from time ranges which we know cause the API to crash, while still giving you a fresh random sample.
 
 ## Accessing the Results
-
-### Python + Pandas
-
-There is a full example in [python_example.py](python_example.py)
 
 ### DB Browser for SQLite
 
@@ -67,9 +61,13 @@ There is a full example in [python_example.py](python_example.py)
 
 NOTE: Usage while scraping could cause the DB Browser to crash (the scraper itself will show an error message in the log and retry until it succeeds).
 
+### Python + Pandas
+
+There are multiple examples in [python_example.py](python_example.py) for getting the data into Pandas dataframes.
+
 ### Other Languages
 
-Most languages have some way of accessing SQLite databases
+Most languages have libraries for accessing SQLite databases. Find one for your language. You can generally use the SQL queries from the Python example in those libraries as well.
 
 ## Parler API Internals
 
@@ -79,7 +77,7 @@ Parler stores times in one of two formats:
 
 *   Compressed − This is the main format used within their API for, e.g., creation times. It is the year, month, day, hour (0-23), minutes, seconds \
 e.g. `20200624154405`
-*   Extended − These are used as pagination keys in the Parler API. It is a UTC ISO8601 Timestamp with an underscore and an additional number. It is not totally clear what the purpose of the additional number is, but they appear to be monotonically increasing with time, suggesting each action might increase a global counter which is then used for deduplicating within a particular millisecond. This is just an educated guess and right now setting it to `0` when issuing API requests seems to work just fine.\
+*   Extended − These are used as pagination keys in the Parler API. It is a UTC ISO8601 Timestamp with an underscore and an additional number. It is not totally clear what the purpose of the additional number is, but they appear to be monotonically increasing within a context (e.g. post paginations) since mid-2019. Exceptions exist before that. This suggests that each action might increase a global counter which is then used for pagination key deduplication. This is just an educated guess and right now setting it to `0` when issuing API requests seems to work just fine.\
 e.g. `2020-10-23T18:04:50.105Z_159130735`
 
 ### Parler Numbers
@@ -92,9 +90,7 @@ Parler uses two session cookies - `mst` and `jst`. These are the long-lived and 
 
 ## Database Columns
 
-Keep in mind that many of these descriptions are educated guesses. There is not official documentation. If you discover evidence of a more accurate description, please either open an Issue or issue a Pull Request with the update.
-
-Each column inclues the column title, a description, and possibly 1 or more example values
+Keep in mind that most of these descriptions are educated guesses. There is no official documentation. If you discover evidence of a more accurate description, please either open an Issue or create a Pull Request with the README correction.
 
 ### Users
 
@@ -105,13 +101,13 @@ The unique ID used to represent the user in Parler's databases
 * `account_color` (e.g. `#a50202`)\
 Color of the user's profile
 * `badges` (e.g. `[0,2]`)\
-A json list of integers corresponding to badges on users' profiles. Here are what the numbers correspond to (with descriptions from Parler's website):
+A json list of integers corresponding to badges on users' profiles. Here are what the numbers correspond to (with descriptions copied from Parler's website):
   * 0 - Verified Real Member: Parler Citizens are verified unique people in the Parler network. This does not mean the person is who they claim to be, just that they are Real People
   * 1 - Verified Influencer: People with a large following who have the potential to be targeted for impersonation, hacking or phishing campaigns. This badge is to protect the person’s authenticity and prove their identity to the community.
   * 2 - Parler Partner: Publisher uses Parler Commenting to import all articles, content and comments from their website community.
   * 3 - Parler Affiliate: Affiliates permit Parler to import articles directly from their website.
   * 4 - Private Account: Private accounts will only allow approved followers to see their Parleys\
-  NOTE: These almost always have `private_account=1`, but rarely `private_account=0` - in this case the user has a private badge but their posts are still publicly visible. This is probably a Parler bug and may indicate users who think they are private but aren't actually. This might be because of a partially failed database transaction.
+  NOTE: These almost always have `private_account=1`, but rarely `private_account=0` - in this case the user has a private badge but their posts are still publicly visible. This is probably a Parler bug and might indicate users who think they are private but aren't actually because their settings didn't save correctly.
   * 5 - Real Member Restricted Comments Badge: Are verified unique people in the Parler network. This does not mean the person is who they claim to be, just that they are Parler Citizens. The darker badge color indicates they restrict communications to other Parler Citizens.
   * 6 - Parody Account: A comical depiction of a high profile individual
   * 7 - Parler Employee: An employee of Parler
@@ -127,7 +123,7 @@ Whether or not you have blocked this user
 Number of comments made by this user
 * `cover_photo` (e.g. `a0a488d502af4fb0b383f0261c9a5793`)\
 Parler ID of the user's cover photo
-* followed (boolean: `0` or `1`)\
+* `followed` (boolean: `0` or `1`)\
 Do you follow this user?
 * `followers` (e.g. `39000`)\
 The number of people who follow this user
@@ -163,10 +159,12 @@ Parler Id of their profile photo
 This seems to be identical to Badge 3
 * `score` (e.g. `1200`)\
 Some kind of internal Parler score. Higher scores generally correspond to more popular users (e.g. Sean Hannity) while negative scores often correspond to anti-conservative accounts (e.g. `@FuckUDonaldTrump`)
-* `state` (e.g. `3`)\
-Unclear - seems to always be a number between 1 and 5
+* `state` (e.g. `2`)\
+Unclear - Usually null but sometimes a number between 1 and 5. I couldn't find an obvious pattern.
 * `username` (e.g. `SeanHannity`)\
-The user's username
+The user's username.\
+NOTE: These are NOT 100% UNIQUE. I have encountered at least one case where duplicate usernames exist - two "@JbriggeRfp"s were created within 1 second of each other with different ids - suggesting there is a bug in Parler user creation, probably some kind of race condition. See these example users [here](https://gist.github.com/daniel-centore/33fa20ae42bb75fc4c91c4ff863eac5e).\
+It may also be possible for a deleted user's username to be reused by someone else, but I have not made any effort to confirm this.
 * `verified` (boolean: `0` or `1`)\
 This seems to be identical to Badge 1
 * `verified_comments` (boolean: `0` or `1`)\
@@ -190,7 +188,7 @@ Parler Id of the user who created the post
 * `depth` (e.g. `4`)\
 A string version of depth_raw. I have no examples of them differing and it's unclear why there is both a string and int version.
 * `depth_raw` (e.g. `4`)\
-A share has a depth of 0. A reshare has a depth of 1. A reshare of a reshare has a depth of 2. Etc. For depth 1, the parent_id is set but not the root. For `depth` >=2, the parent represents what this post is a reshare of and the root represents the very first post shared in the chain.
+A share has a depth of 0. A reshare has a depth of 1. A reshare of a reshare has a depth of 2. Etc. For depth 1, the `parent_id` is set but not the `root_id`. For `depth >= 2`, the `parent_id` represents what this post is a reshare of and the `root_id` represents the very first post shared in the chain.
 * `hashtags` (e.g. `["maga2020","maga","electionintegrity"]`)\
 A json list of hashtags used in the post
 * `impressions` (e.g. `12000`)\
@@ -212,7 +210,7 @@ Nominally setting this to `1` means that the content can only be viewed if "Hide
 * `share_link` (e.g. `https://parler.com/post/b726e8115d8948f3a72481d3a8f69be6`)\
 The link used within the share button. This is often null; the share button is missing in this case. However, even when this is null, going to `https://parler.com/post/`{id} let's you view the post.
 * `state` (e.g. `4`)\
-Unclear. Almost always 4. Sometime null or 7.
+Unclear. Almost always 4. Sometimes null or 7.
 * `upvotes` (e.g. `64000`)\
 The number of times this post has been upvoted
 
