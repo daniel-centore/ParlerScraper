@@ -277,10 +277,12 @@ public class ScraperDb {
             }
         }
 
+        ParlerUser currentUser = null;
         while (true) {
             try {
                 beginTransaction();
                 for (ParlerUser user : users) {
+                    currentUser = user;
                     ParlerUser existingUser = existingUsers.get(user.getParlerId());
 
                     if (existingUser == null) {
@@ -297,11 +299,15 @@ public class ScraperDb {
                         }
                     }
                 }
+                currentUser = null;
                 endTransaction();
                 break;
             } catch (Exception e) {
                 e.printStackTrace();
                 gui.println("> Local DB transaction failed, retrying...");
+                if (currentUser != null) {
+                    gui.println("> Failed user was: " + currentUser.getUsername() + " " + currentUser.getParlerId());
+                }
                 PUtils.sleep(DB_FAIL_TIME_MS);
             }
         }

@@ -58,8 +58,8 @@ public class ParlerScraping {
         this.startTime = startTime;
         this.endTime = endTime;
 
-        gui.println("Scraping from " + startTime.toSimpleDateTimeMsFormat() + " thru "
-                + endTime.toSimpleDateTimeMsFormat() + " UTC");
+        gui.println("Scraping from " + this.startTime.toSimpleDateTimeMsFormat() + " thru "
+                + this.endTime.toSimpleDateTimeMsFormat() + " UTC");
 
         gui.println("######################");
         gui.println("### Scraping Seeds ###");
@@ -87,7 +87,7 @@ public class ParlerScraping {
                 ParlerUser user = getWeightedRandomUser();
                 scrapeUser(user, false);
             }
-            
+
             if (stopRequested) {
                 return;
             }
@@ -156,7 +156,7 @@ public class ParlerScraping {
 
         gui.println(TAB + "Fetching profile from API...");
         ParlerUser profile = client.fetchProfile(username);
-        
+
         if (profile == null) {
             gui.println(TAB + "Failed to fetch @" + username + "; skipping...");
             return;
