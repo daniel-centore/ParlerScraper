@@ -32,7 +32,6 @@ public class ParlerScraping {
     private static final RandomDataGenerator random = new RandomDataGenerator();
 
     private static final int UNENCOUNTERED_BIAS = 2;
-    private static final int USERS_PER_HASHTAG = 5;
 
     // Many users have a "I just joined Parler! Looking forward to meeting everyone here." post, let's get real posts
     public static final int MINIMUM_POSTS = 2;
@@ -52,7 +51,7 @@ public class ParlerScraping {
         this.gui = gui;
     }
 
-    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds) throws InterruptedIOException {
+    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds, int userRatio, int hashtagRatio) throws InterruptedIOException {
         stopRequested = false;
 
         this.startTime = startTime;
@@ -83,7 +82,7 @@ public class ParlerScraping {
         gui.println("### Scraping Randomly ###");
         gui.println("#########################");
         while (!stopRequested) {
-            for (int i = 0; i < USERS_PER_HASHTAG && !stopRequested; ++i) {
+            for (int i = 0; i < userRatio && !stopRequested; ++i) {
                 ParlerUser user = getWeightedRandomUser();
                 scrapeUser(user, false);
             }
@@ -92,12 +91,14 @@ public class ParlerScraping {
                 return;
             }
 
-            ParlerHashtag hashtag = getWeightedRandomHashtag();
-            String htDebug = String.format("encounters=%,d", hashtag.getEncounters());
-            if (hashtag.getTotalPosts() != null) {
-                htDebug += String.format("; posts=%,d", hashtag.getTotalPosts());
+            for (int i = 0; i < hashtagRatio && !stopRequested; ++i) {
+                ParlerHashtag hashtag = getWeightedRandomHashtag();
+                String htDebug = String.format("encounters=%,d", hashtag.getEncounters());
+                if (hashtag.getTotalPosts() != null) {
+                    htDebug += String.format("; posts=%,d", hashtag.getTotalPosts());
+                }
+                scrapeHashtag(hashtag.getHashtag(), false, htDebug);
             }
-            scrapeHashtag(hashtag.getHashtag(), false, htDebug);
         }
     }
 

@@ -80,7 +80,13 @@ public class Main implements ICookiesListener {
         }
     }
 
-    public void resumePostScrapeBtn(String mst, String jst, String startDate, String endDate, String seeds) {
+    public void resumePostScrapeBtn(String mst, String jst, String startDate, String endDate, String seeds, int userRatio, int hashtagRatio) {
+        final int userRatioF = Math.max(userRatio, 0);
+        final int hashtagRatioF = Math.max(hashtagRatio, 0);
+        if (userRatio <= 0 && hashtagRatio <= 0) {
+            gui.println("> user and hashtag cannot both be 0");
+            return;
+        }
         updateCookiesFile(mst, jst);
 
         startDate = startDate.trim();
@@ -120,7 +126,7 @@ public class Main implements ICookiesListener {
                 gui.setRunning(true);
 
                 try {
-                    scraper.scrape(finalStartTime, finalEndTime, getSeeds(seeds));
+                    scraper.scrape(finalStartTime, finalEndTime, getSeeds(seeds), userRatioF, hashtagRatioF);
                 } catch (InterruptedIOException e) {
                     // Stop button pressed
                 } catch (Exception e) {
