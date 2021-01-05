@@ -69,6 +69,10 @@ public class ParlerTime implements Comparable<ParlerTime> {
         return SIMPLE_DATETIME_MS_FORMAT.format(toCalendar().getTime());
     }
     
+    /**
+     * yyyy-MM-dd
+     * @return
+     */
     public String toSimpleDateFormat() {
         return SIMPLE_DATE_FORMAT.format(toCalendar().getTime());
     }

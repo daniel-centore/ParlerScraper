@@ -364,6 +364,13 @@ public class ScraperDb {
                 .setParameter("scrapedType", scrapeType)
                 .getResultList();
     }
+    
+    @SuppressWarnings("unchecked")
+    public List<ScrapedRange> getAllRanges(ScrapeType scrapeType) {
+        return session.createQuery("FROM ScrapedRange R WHERE R.scrapedType = :scrapedType")
+                .setParameter("scrapedType", scrapeType)
+                .getResultList();
+    }
 
     public void beginTransaction() {
         try {

@@ -211,7 +211,7 @@
           <Properties>
             <Property name="columns" type="int" value="20"/>
             <Property name="rows" type="int" value="5"/>
-            <Property name="text" type="java.lang.String" value="SeanHannity&#xa;TedCruz&#xa;RudyG&#xa;TuckerCarlson&#xa;BreitbartNews"/>
+            <Property name="text" type="java.lang.String" value="SeanHannity&#xa;TedCruz&#xa;RudyG&#xa;TuckerCarlson&#xa;BreitbartNews&#xa;Jared&#xa;NYTimes&#xa;BuzzFeed&#xa;CNN&#xa;WashingtonPost&#xa;parler"/>
           </Properties>
         </Component>
       </SubComponents>
@@ -264,13 +264,13 @@
     </Component>
     <Component class="javax.swing.JTextField" name="startDateField">
       <Properties>
-        <Property name="text" type="java.lang.String" value="2020-10-01"/>
+        <Property name="text" type="java.lang.String" value="2018-08-23"/>
         <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="endDateField">
       <Properties>
-        <Property name="text" type="java.lang.String" value="2020-12-25"/>
+        <Property name="text" type="java.lang.String" value="BLAH"/>
       </Properties>
     </Component>
     <Container class="javax.swing.JScrollPane" name="textAreaScroll">

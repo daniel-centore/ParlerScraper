@@ -27,11 +27,12 @@ public class ParlerScraperGui extends javax.swing.JFrame {
     /**
      * Creates new form ParlerScraperGui
      */
-    public ParlerScraperGui(Main main, String mst, String jst) {
+    public ParlerScraperGui(Main main, String mst, String jst, String endDate) {
         initComponents();
         this.main = main;
         this.jstArea.setText(jst.trim());
         this.mstArea.setText(mst.trim());
+        this.endDateField.setText(endDate);
     }
 
     /**
@@ -82,7 +83,7 @@ public class ParlerScraperGui extends javax.swing.JFrame {
 
         seedArea.setColumns(20);
         seedArea.setRows(5);
-        seedArea.setText("SeanHannity\nTedCruz\nRudyG\nTuckerCarlson\nBreitbartNews");
+        seedArea.setText("SeanHannity\nTedCruz\nRudyG\nTuckerCarlson\nBreitbartNews\nJared\nNYTimes\nBuzzFeed\nCNN\nWashingtonPost\nparler");
         jScrollPane1.setViewportView(seedArea);
 
         jLabel1.setText("1) a) Log in to Parler in Chrome");
@@ -111,10 +112,10 @@ public class ParlerScraperGui extends javax.swing.JFrame {
 
         jLabel8.setText("End date:");
 
-        startDateField.setText("2020-10-01");
+        startDateField.setText("2018-08-23");
         startDateField.setToolTipText("");
 
-        endDateField.setText("2020-12-25");
+        endDateField.setText("BLAH");
 
         textAreaScroll.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         textAreaScroll.setEnabled(false);

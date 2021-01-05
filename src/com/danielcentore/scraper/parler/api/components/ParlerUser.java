@@ -245,7 +245,7 @@ public class ParlerUser extends ParlerResponse {
     }
     
     @Transient
-    public ParlerTime getJoinerParlerTime() {
+    public ParlerTime getJoinedParlerTime() {
         return getJoined() == null ? null : ParlerTime.fromCompressedParlerTimestamp(getJoined());
     }
 

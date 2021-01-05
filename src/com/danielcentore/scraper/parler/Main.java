@@ -44,7 +44,7 @@ public class Main implements ICookiesListener {
         } catch (FileNotFoundException e1) {
         }
 
-        gui = new ParlerScraperGui(this, mst, jst);
+        gui = new ParlerScraperGui(this, mst, jst, ParlerTime.now().toSimpleDateFormat());
         gui.setEnabled(false);
         gui.setVisible(true);
         gui.println("Initializing local database...");

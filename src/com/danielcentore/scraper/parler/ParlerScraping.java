@@ -1,6 +1,8 @@
 package com.danielcentore.scraper.parler;
 
 import java.io.InterruptedIOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,7 +53,8 @@ public class ParlerScraping {
         this.gui = gui;
     }
 
-    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds, int userRatio, int hashtagRatio) throws InterruptedIOException {
+    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds, int userRatio, int hashtagRatio)
+            throws InterruptedIOException {
         stopRequested = false;
 
         this.startTime = startTime;
@@ -83,8 +86,12 @@ public class ParlerScraping {
         gui.println("#########################");
         while (!stopRequested) {
             for (int i = 0; i < userRatio && !stopRequested; ++i) {
-                ParlerUser user = getWeightedRandomUser();
-                scrapeUser(user, false);
+                UserResult user = getWeightedRandomUser();
+                String debug = String.format("days=%.1f", user.score);
+                if (user.user.getPosts() != null) {
+                    debug += String.format("; posts=%,d", user.user.getPosts());
+                }
+                scrapeUser(user.user, false, debug);
             }
 
             if (stopRequested) {
@@ -138,13 +145,10 @@ public class ParlerScraping {
      * 
      * @param user
      * @param skipIfExists
+     * @param debug 
      * @throws InterruptedIOException
      */
-    private void scrapeUser(ParlerUser user, boolean skipIfExists) throws InterruptedIOException {
-        String debug = String.format("score=%,d", user.getScore());
-        if (user.getPosts() != null) {
-            debug += String.format(", posts=%,d", user.getPosts());
-        }
+    private void scrapeUser(ParlerUser user, boolean skipIfExists, String debug) throws InterruptedIOException {
         scrapeUsername(user.getUsername(), skipIfExists, debug);
     }
 
@@ -184,7 +188,7 @@ public class ParlerScraping {
         ParlerTime end = this.endTime;
 
         // Move start to the user's joined time if they joined after the start
-        ParlerTime joinedTime = profile.getJoinerParlerTime();
+        ParlerTime joinedTime = profile.getJoinedParlerTime();
         if (joinedTime != null && start.compareTo(joinedTime) < 0) {
             start = joinedTime;
         }
@@ -251,26 +255,25 @@ public class ParlerScraping {
         gui.println(TAB + "Done.");
     }
 
-    private ParlerUser getWeightedRandomUser() {
+    private UserResult getWeightedRandomUser() {
+        List<ScrapedRange> allRanges = db.getAllRanges(ScrapeType.USER_POSTS);
+        HashMap<String, List<ScrapedRange>> allRangesMap = new HashMap<>();
+        for (ScrapedRange sr : allRanges) {
+            if (!allRangesMap.containsKey(sr.getScrapedId())) {
+                allRangesMap.put(sr.getScrapedId(), new ArrayList<ScrapedRange>());
+            }
+            allRangesMap.get(sr.getScrapedId()).add(sr);
+        }
+
         List<ParlerUser> allNotWorthlessUsers = db.getAllPublicNotWorthlessUsers(MINIMUM_POSTS)
                 .stream()
                 // Only include users who existed before the end date
-                .filter(user -> user.getJoinerParlerTime().compareTo(this.endTime) < 0)
+                .filter(user -> user.getJoinedParlerTime().compareTo(this.endTime) < 0)
                 .collect(Collectors.toList());
 
-        SimpleRegression scoreToPosts = new SimpleRegression();
-        int nonNull = 0;
-        for (ParlerUser user : allNotWorthlessUsers) {
-            if (user.getPosts() != null) {
-                nonNull++;
-                scoreToPosts.addData(user.getScore(), user.getPosts());
-            }
-        }
-
-        final int nonNullF = nonNull;
-        List<Pair<ParlerUser, Double>> userWeights = allNotWorthlessUsers.stream()
-                .map(i -> new Pair<ParlerUser, Double>(i, weighUser(i, scoreToPosts, nonNullF)))
-                .filter(htp -> htp.getSecond() > Double.NEGATIVE_INFINITY)
+        List<Pair<UserResult, Double>> userWeights = allNotWorthlessUsers.stream()
+                .map(i -> new UserResult(i, weighUser(i, allRangesMap)))
+                .map(i -> new Pair<UserResult, Double>(i, i.score))
                 .collect(Collectors.toList());
 
         return new EnumeratedDistribution<>(userWeights).sample();
@@ -325,7 +328,7 @@ public class ParlerScraping {
         }
 
         final int nonNullF = nonNull;
-        List<Pair<ParlerHashtag, Double>> hashtagWeights = allHashtags.stream()
+        List<Pair<ParlerHashtag, Double>> hashtagWeights = allHashtags.parallelStream()
                 .map(ht -> new Pair<ParlerHashtag, Double>(ht, weighHashtag(ht, encountersToPosts, nonNullF)))
                 .filter(htp -> htp.getSecond() > Double.NEGATIVE_INFINITY)
                 .collect(Collectors.toList());
@@ -345,22 +348,67 @@ public class ParlerScraping {
         return totalPosts <= 0 ? Double.NEGATIVE_INFINITY : Math.log(totalPosts);
     }
 
-    private double weighUser(ParlerUser user, SimpleRegression scoreToPosts, int nonNull) {
-        Long totalPosts = user.getPosts();
-        if (totalPosts == null) {
-            long score = user.getScore();
-            if (nonNull > 1) {
-                totalPosts = (long) scoreToPosts.predict(score) * UNENCOUNTERED_BIAS;
-            } else {
-                totalPosts = score * UNENCOUNTERED_BIAS;
-            }
-        } else if (totalPosts < MINIMUM_POSTS) {
-            return Double.NEGATIVE_INFINITY;
+    /**
+     * This currently weighs the user by computing the number of unscraped days they have existed within the start-end
+     * bounds.
+     * 
+     * @param user
+     * @param allUserRanges
+     * @return
+     */
+    private double weighUser(ParlerUser user, HashMap<String, List<ScrapedRange>> allUserRanges) {
+        ParlerTime start = this.startTime;
+        ParlerTime end = this.endTime;
+
+        // Move start to the user's joined time if they joined after the start
+        ParlerTime joinedTime = user.getJoinedParlerTime();
+        if (joinedTime != null && start.compareTo(joinedTime) < 0) {
+            start = joinedTime;
         }
-        return Math.max(Math.log(totalPosts), 20);
+
+        String id = user.getParlerId();
+        List<ScrapedRange> allRanges = allUserRanges.get(id);
+        if (allRanges == null) {
+            allRanges = new ArrayList<>();
+        }
+        // Include range of everything up until the earliest time
+        allRanges.add(new ScrapedRange(ScrapeType.USER_POSTS, id, ParlerTime.fromUnixTimestampMs(0L),
+                ParlerTime.fromUnixTimestampMs(0L), null, null));
+        List<TimeInterval> ranges = PUtils.mergeScrapedRanges(allRanges);
+
+        long min = start.toUnixTimeMs();
+        long max = end.toUnixTimeMs();
+
+        long weight = max - min;
+
+        for (TimeInterval ti : ranges) {
+            if (ti.max < min || ti.min > max) {
+                continue;
+            } else if (ti.min < min && ti.max > max) {
+                weight = 0;
+                break;
+            } else if (ti.min < min) {
+                weight -= (ti.max - min);
+            } else if (ti.max > max) {
+                weight -= (max - ti.min);
+            } else {
+                weight -= (ti.max - ti.min);
+            }
+        }
+
+        return weight / (1000.0 * 60 * 60 * 24);
     }
 
     public void stop() {
         this.stopRequested = true;
+    }
+}
+
+class UserResult {
+    ParlerUser user;
+    double score;
+    UserResult(ParlerUser user, double score) {
+        this.user = user;
+        this.score = score;
     }
 }
