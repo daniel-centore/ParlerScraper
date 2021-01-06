@@ -120,6 +120,12 @@ public class ParlerUser extends ParlerResponse {
     @JsonProperty("media")
     Long media;
 
+    /**
+     * This field only appears for accounts you have followed
+     */
+    @JsonProperty("subscribed")
+    Boolean subscribed;
+
     // == Scraper Fields ==
     boolean fullyScanned;
 
@@ -243,7 +249,7 @@ public class ParlerUser extends ParlerResponse {
     public void setJoined(String joined) {
         this.joined = joined;
     }
-    
+
     @Transient
     public ParlerTime getJoinedParlerTime() {
         return getJoined() == null ? null : ParlerTime.fromCompressedParlerTimestamp(getJoined());
@@ -446,6 +452,15 @@ public class ParlerUser extends ParlerResponse {
 
     public void setFullyScanned(boolean fullyScanned) {
         this.fullyScanned = fullyScanned;
+    }
+
+    @Column(name = "subscribed")
+    public Boolean isSubscribed() {
+        return subscribed;
+    }
+
+    public void setSubscribed(Boolean subscribed) {
+        this.subscribed = subscribed;
     }
 
     @Override

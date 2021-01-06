@@ -5,14 +5,14 @@ ParlerScraper is a tool for scraping a pseudo-random sample of Parler posts. The
 
 This tool is provided AS-IS. It uses the internal, undocumented Parler API, and might stop working at any moment. US law generally protects reverse engineering non-public APIs so long as the purpose itself is legal (not, e.g., for bypassing a paid service), but laws may vary in your jurisdiction.
 
-The sample WILL **NOT** BE A PERFECTLY UNIFORM SAMPLE. A nonexhaustive list of some sources of sampling bias:
+We make a best effort to provide a uniform, representative sample, but it's not currently possible to do so perfectly with the APIs available publicly. A nonexhaustive list of some sources of bias:
 
-* We first randomly select a user and then the time to sample them at. If the user started existing halfway through the sample period, the randomly sampled time will only be selected from the period when that user actually existed, biasing the overall data set toward recency.
-* Popular hashtags (and users who post A TON) get failed queries when querying more than ~1 month in the past (it varies by post frequency). We thus only get posts from these for more recent days, biasing the overall data set toward recency.
+* The data early on in the sampling process is heavily biased by the initial seeds. It takes some time before a more representative sample is built. Between 100K-1M posts are probably necessary for most applications (about 1-14 days).
+* Popular hashtags (and users who post A TON) get failed queries when querying far into the past. We thus only get posts from these for more recent days, biasing the overall data set toward recency. This is fairly negligible when scraping only users but will be substantial if you enable hashtag scraping. It is recommended that you only enable hashtag scraping for small, recent time ranges (e.g. the last week).
+* If you sample hashtags, we bias toward more popular hashtags and hashtags which have not yet been scraped using heuristics.
 * If we sample a reshare, we add both the reshare and the earlier, original post to the data set. This increases the chances of getting older posts and posts which have been reshared many times.
-* We use heuristics when decising which users and hashtags to sample so that we are more likely to sample "popular" users and hashtags rather than users and hashtags with little content and little reach.
-* If the end user samples over multiple date ranges, this can introduce lots of non-uniformity to the data set. It might be better to rename or delete the database and sample new date ranges from scratch.
-* We randomly select the time to scrape at with equal weight given to all times throughout the unscraped range. However, the Parler API then returns results from that time *and earlier*, giving a bit of a bias toward older posts.
+* If the end user samples over multiple date ranges, this can introduce lots of non-uniformity to the data set. It would generally be better to rename or delete the database and sample a new date range from scratch.
+* We randomly select the time to scrape at with equal weight given to all times throughout the unscraped range. However, the Parler API then returns results from that time *and earlier*, giving a slight bias toward older posts. In practice this means the `end date - 1 week` or so may not be uniformly sampled. It would be best to add a week or two to the end date and then filter the resulting afterward.
 
 Please analyze responsibly.
 
@@ -36,10 +36,12 @@ These steps should not need to be repeated unless the `mst` is invalidated (e.g.
 
 ### Scraping a time range
 
-1. Set the seeds you'd like to use. This is what we initially scrape and then branch out across the Parler network from there. The defaults should generally be fine.
-2. Type in your start and end dates you'd like to scrape. They are in the format YEAR-MONTH-DATE. (e.g. `2020-12-25` for 25 December, 2020)
-3. Click Start/Resume and it will run automatically until you turn it off.
-4. The software can be turned off and restarted at any point in the future.
+1. Set the seeds you'd like to use, putting one on each line. This is what we initially scrape and then branch out across the Parler network from there. The defaults should generally be fine. Users should be in the form `username` and hashtags in the form `#hashtag`.
+2. Type in your start and end dates you'd like to scrape. They are in the format YEAR-MONTH-DATE. (e.g. `2020-12-25` for 25 December, 2020). It would be a good idea to pad them a little bit (perhaps 1-2 weeks) on either side and then filter the sample after the fact to get a more uniform sample within the region you care about.
+3. Adjust the ratio of users to hashtags which will be scraped. If set to 5:2, for example, we would scrape 5 users for every 2 hashtags.\
+NOTE: Hashtag scraping should generally only be turned on when sampling very recent time ranges (e.g. last week) because the Parler API tends to crash when querying old hashtag dates, which will result in a non-uniform sample.
+4. Click Start/Resume and it will run automatically until you turn it off.
+5. The software can be turned off and restarted at any point in the future.
 
 NOTE: Make sure you have a stable internet connection! The software does not currently distinguish between the API crashing and you not having internet, so it may mark valid time ranges as invalid if you lose connectivity.
 
@@ -161,6 +163,8 @@ This seems to be identical to Badge 3
 Some kind of internal Parler score. Higher scores generally correspond to more popular users (e.g. Sean Hannity) while negative scores often correspond to anti-conservative accounts (e.g. `@FuckUDonaldTrump`)
 * `state` (e.g. `2`)\
 Unclear - Usually null but sometimes a number between 1 and 5. I couldn't find an obvious pattern.
+* `subscribed` (boolean: `0` or `1`)\
+Whether or not you are subscribed to this user. NULL if you do not follow them.
 * `username` (e.g. `SeanHannity`)\
 The user's username.\
 NOTE: These are NOT 100% UNIQUE. I have encountered at least one case where duplicate usernames exist - two "@JbriggeRfp"s were created within 1 second of each other with different ids - suggesting there is a bug in Parler user creation, probably some kind of race condition. See these example users [here](https://gist.github.com/daniel-centore/33fa20ae42bb75fc4c91c4ff863eac5e).\
