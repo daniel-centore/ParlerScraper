@@ -48,6 +48,8 @@ public class ParlerClient {
 
     private ParlerScraperGui gui;
     
+    private long lastRequest = 0;
+    
     private volatile boolean stopRequested = false;
 
     public ParlerClient(String mst, String jst, ParlerScraperGui gui) {
@@ -61,7 +63,12 @@ public class ParlerClient {
         stopRequested = false;
         
         int attempt = 0;
-        long waitTime = 1000 + random.nextInt(1500);
+        long waitTime = 500 + random.nextInt(1500);
+        if (lastRequest > 0) {
+            waitTime -= System.currentTimeMillis() - lastRequest;
+            lastRequest = System.currentTimeMillis();
+            waitTime = Math.max(waitTime, 1);
+        }
 
         while (true) {
             try {

@@ -83,7 +83,7 @@ public class ParlerScraperGui extends javax.swing.JFrame {
 
         seedArea.setColumns(20);
         seedArea.setRows(5);
-        seedArea.setText("SeanHannity\nTedCruz\nRudyG\nTuckerCarlson\nBreitbartNews\nJared\nNYTimes\nBuzzFeed\nCNN\nWashingtonPost\nparler");
+        seedArea.setText("SeanHannity\nTedCruz\nRudyG\nTuckerCarlson\nBreitbartNews\nJared\nNYTimes\nBuzzFeed\nCNN\nWashingtonPost\nparler\nEricTrump");
         jScrollPane1.setViewportView(seedArea);
 
         jLabel1.setText("1) a) Log in to Parler in Chrome");

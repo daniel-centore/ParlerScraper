@@ -187,7 +187,7 @@ The body of the post
 Number of comments on the post
 * `created_at` (e.g. `20201023202139`)\
 When the post was created\
-NOTE: This seems not 100% reliable. [Here's an example](https://parler.com/post/0940f0702765e225428eade006f7fcc5) of a post dated to 2017 despite neither the account nor Parler itself existing yet.
+NOTE: Posts from imported accounts (e.g. `integration=1` or `rss=1`) can be dated to before Parler existed and before the account creation date. [Here's an example](https://parler.com/post/0940f0702765e225428eade006f7fcc5).
 * `creator_id` (e.g. `4b8638eca2db4b17b3a7203e40ac8ce7`)\
 Parler Id of the user who created the post
 * `depth` (e.g. `4`)\
