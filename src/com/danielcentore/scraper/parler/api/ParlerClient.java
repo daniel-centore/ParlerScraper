@@ -193,6 +193,28 @@ public class ParlerClient {
 
         return null;
     }
+    
+    public PagedParlerPosts fetchPagedLikes(ParlerUser user) throws InterruptedIOException {
+        return fetchPagedLikes(user, null);
+    }
+    
+    public PagedParlerPosts fetchPagedLikes(ParlerUser user, ParlerTime start) throws InterruptedIOException {
+        String response = fetchPagedUserResponse("profile/" + user.getUrlEncodedUsername() + "/posts",
+                "v1/post/creator/liked", user, start);
+        if (response == null) {
+            return null;
+        }
+
+        try {
+            return mapper.readValue(response, PagedParlerPosts.class);
+        } catch (Exception e) {
+            gui.println("> Failed to deserialize: " + e.getLocalizedMessage());
+            gui.println("> Response: " + response);
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
     public PagedParlerUsers fetchFollowing(ParlerUser user) throws InterruptedIOException {
         return fetchFollowing(user, null);

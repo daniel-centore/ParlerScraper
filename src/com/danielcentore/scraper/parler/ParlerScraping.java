@@ -229,6 +229,26 @@ public class ParlerScraping {
         if (stopRequested) {
             return;
         }
+        
+        if (profile.getLikes() != null && profile.getLikes() == 0) {
+            gui.println(TAB + "User has liked 0 posts; skipping post likes API call");
+        } else {
+            ParlerTime randomTime = getRandomTime(ScrapeType.USER_LIKES, userId, start, end);
+            gui.println(TAB + "Fetching liked posts from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
+            PagedParlerPosts pagedPosts = client.fetchPagedLikes(profile, randomTime);
+            if (pagedPosts != null) {
+                int postCount = pagedPosts.getPostCount();
+                gui.println(TAB + "Storing " + postCount + " posts in local DB...");
+                db.storePagedPosts(pagedPosts);
+            } else {
+                gui.println(TAB + "Failure - Blacklisting this query and earlier");
+            }
+            db.storeScrapedRange(ScrapeType.USER_LIKES, userId, randomTime, pagedPosts);
+        }
+        
+        if (stopRequested) {
+            return;
+        }
 
         if (profile.getFollowing() != null && profile.getFollowing() == 0) {
             gui.println(TAB + "User is following 0 people; skipping followee API call");
