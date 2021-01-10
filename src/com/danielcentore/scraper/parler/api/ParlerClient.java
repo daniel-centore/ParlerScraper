@@ -36,7 +36,7 @@ public class ParlerClient {
     public static final String API_DOMAIN = "https://api.parler.com";
 
     public static final int TIMEOUT_SEC = 35;
-    public static final int MAX_ATTEMPTS = 2;
+    public static final int MAX_ATTEMPTS = 4;
 
     private static ObjectMapper mapper = new ObjectMapper();
     private static Random random = new Random();
