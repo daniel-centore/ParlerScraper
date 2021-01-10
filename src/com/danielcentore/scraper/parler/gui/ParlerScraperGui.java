@@ -76,6 +76,7 @@ public class ParlerScraperGui extends javax.swing.JFrame {
         hashtagsSpinner = new javax.swing.JSpinner();
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
+        nowCheckbox = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Parler Scraper");
@@ -165,6 +166,13 @@ public class ParlerScraperGui extends javax.swing.JFrame {
 
         jLabel11.setText("hashtags >0 will likely result in non-uniform sample");
 
+        nowCheckbox.setText("Now");
+        nowCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nowCheckboxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -206,17 +214,6 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(stopBtn))
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(188, 188, 188)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(endDateField)
-                                            .addComponent(startDateField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                    .addComponent(jLabel7))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel4))
-                            .addComponent(jLabel8)
-                            .addGroup(layout.createSequentialGroup()
                                 .addComponent(usersSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jLabel9)
@@ -226,7 +223,20 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(hashtagsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabel10))))))
+                                        .addComponent(jLabel10))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(188, 188, 188)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addComponent(endDateField)
+                                            .addComponent(startDateField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(jLabel7)
+                                    .addComponent(jLabel8))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel4)
+                                    .addComponent(nowCheckbox)))))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(37, 37, 37)
                         .addComponent(jLabel3))
@@ -280,7 +290,8 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel8)
-                                    .addComponent(endDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(endDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(nowCheckbox))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(usersSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -312,22 +323,28 @@ public class ParlerScraperGui extends javax.swing.JFrame {
                 this.endDateField.getText(),
                 this.seedArea.getText(),
                 (int) this.usersSpinner.getValue(),
-                (int) this.hashtagsSpinner.getValue());
+                (int) this.hashtagsSpinner.getValue(),
+                this.nowCheckbox.isSelected());
     }//GEN-LAST:event_startBtnActionPerformed
 
     private void stopBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopBtnActionPerformed
         main.stopPostScrapeBtn();
     }//GEN-LAST:event_stopBtnActionPerformed
 
+    private void nowCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nowCheckboxActionPerformed
+        this.endDateField.setEnabled(!nowCheckbox.isSelected());
+    }//GEN-LAST:event_nowCheckboxActionPerformed
+
     public void setRunning(boolean running) {
         this.jstArea.setEnabled(!running);
         this.mstArea.setEnabled(!running);
         this.startDateField.setEnabled(!running);
-        this.endDateField.setEnabled(!running);
+        this.endDateField.setEnabled(!running && !nowCheckbox.isSelected());
         this.startBtn.setEnabled(!running);
         this.seedArea.setEnabled(!running);
         this.usersSpinner.setEnabled(!running);
         this.hashtagsSpinner.setEnabled(!running);
+        this.nowCheckbox.setEnabled(!running);
     }
     
     public void println(String text) {
@@ -386,6 +403,7 @@ public class ParlerScraperGui extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTextArea jstArea;
     private javax.swing.JTextArea mstArea;
+    private javax.swing.JCheckBox nowCheckbox;
     private javax.swing.JTextArea seedArea;
     private javax.swing.JButton startBtn;
     private javax.swing.JTextField startDateField;

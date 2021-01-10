@@ -44,6 +44,7 @@ public class ParlerScraping {
 
     private ParlerTime startTime;
     private ParlerTime endTime;
+    private boolean now;
 
     private volatile boolean stopRequested = false;
 
@@ -53,15 +54,17 @@ public class ParlerScraping {
         this.gui = gui;
     }
 
-    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds, int userRatio, int hashtagRatio)
+    public void scrape(ParlerTime startTime, ParlerTime endTime, List<String> seeds, int userRatio, int hashtagRatio,
+            boolean now)
             throws InterruptedIOException {
         stopRequested = false;
 
         this.startTime = startTime;
         this.endTime = endTime;
+        this.now = now;
 
         gui.println("Scraping from " + this.startTime.toSimpleDateTimeMsFormat() + " thru "
-                + this.endTime.toSimpleDateTimeMsFormat() + " UTC");
+                + (now ? "the current time" : this.endTime.toSimpleDateTimeMsFormat() + " UTC"));
 
         gui.println("######################");
         gui.println("### Scraping Seeds ###");
@@ -86,6 +89,8 @@ public class ParlerScraping {
         gui.println("#########################");
         while (!stopRequested) {
             for (int i = 0; i < userRatio && !stopRequested; ++i) {
+                maybeUpdateEndtime();
+
                 UserResult user = getWeightedRandomUser();
                 String debug = String.format("days=%.1f", user.score);
                 if (user.user.getPosts() != null) {
@@ -99,6 +104,8 @@ public class ParlerScraping {
             }
 
             for (int i = 0; i < hashtagRatio && !stopRequested; ++i) {
+                maybeUpdateEndtime();
+
                 ParlerHashtag hashtag = getWeightedRandomHashtag();
                 String htDebug = String.format("encounters=%,d", hashtag.getEncounters());
                 if (hashtag.getTotalPosts() != null) {
@@ -106,6 +113,13 @@ public class ParlerScraping {
                 }
                 scrapeHashtag(hashtag.getHashtag(), false, htDebug);
             }
+        }
+    }
+
+    private void maybeUpdateEndtime() {
+        if (now) {
+            this.endTime = ParlerTime.now();
+            gui.println("Updated endtime to " + this.endTime.toSimpleDateTimeMsFormat());
         }
     }
 
@@ -145,7 +159,7 @@ public class ParlerScraping {
      * 
      * @param user
      * @param skipIfExists
-     * @param debug 
+     * @param debug
      * @throws InterruptedIOException
      */
     private void scrapeUser(ParlerUser user, boolean skipIfExists, String debug) throws InterruptedIOException {
@@ -407,6 +421,7 @@ public class ParlerScraping {
 class UserResult {
     ParlerUser user;
     double score;
+
     UserResult(ParlerUser user, double score) {
         this.user = user;
         this.score = score;
