@@ -85,24 +85,11 @@ public class ScraperDb {
         // Make sure there's only one of each
         links = new HashSet<ParlerLink>(links);
 
-        List<String> parlerIds = links.stream().map(post -> post.getLinkId()).collect(Collectors.toList());
-
-        MultiIdentifierLoadAccess<ParlerLink> multiLoadAccess = session.byMultipleIds(ParlerLink.class);
-        List<ParlerLink> existingLinksList = multiLoadAccess.multiLoad(parlerIds);
-        HashMap<String, ParlerLink> existingLinks = new HashMap<>();
-        for (ParlerLink link : existingLinksList) {
-            if (link != null) {
-                existingLinks.put(link.getLinkId(), link);
-            }
-        }
-
+        session.clear();
         while (true) {
             try {
                 beginTransaction();
                 for (ParlerLink link : links) {
-                    if (existingLinks.containsKey(link.getLinkId())) {
-                        session.detach(existingLinks.get(link.getLinkId()));
-                    }
                     session.saveOrUpdate(link);
                 }
                 endTransaction();
@@ -128,25 +115,12 @@ public class ScraperDb {
 
         // Make sure there's only one of each
         posts = new HashSet<>(posts);
-
-        List<String> parlerIds = posts.stream().map(post -> post.getParlerId()).collect(Collectors.toList());
-
-        MultiIdentifierLoadAccess<ParlerPost> multiLoadAccess = session.byMultipleIds(ParlerPost.class);
-        List<ParlerPost> existingPostsList = multiLoadAccess.multiLoad(parlerIds);
-        HashMap<String, ParlerPost> existingPosts = new HashMap<>();
-        for (ParlerPost post : existingPostsList) {
-            if (post != null) {
-                existingPosts.put(post.getParlerId(), post);
-            }
-        }
-
+        
+        session.clear();
         while (true) {
             try {
                 beginTransaction();
                 for (ParlerPost post : posts) {
-                    if (existingPosts.containsKey(post.getParlerId())) {
-                        session.detach(existingPosts.get(post.getParlerId()));
-                    }
                     session.saveOrUpdate(post);
                 }
                 endTransaction();
