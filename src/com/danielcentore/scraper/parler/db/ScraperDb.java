@@ -321,7 +321,7 @@ public class ScraperDb {
     public List<ParlerUser> getAllPublicNotWorthlessUsers(long minPosts) {
         return session
                 .createQuery(
-                        "FROM ParlerUser U WHERE U.privateAccount = 0 AND (U.posts is null OR U.posts > :minPosts)")
+                        "FROM ParlerUser U WHERE U.privateAccount = 0 AND (U.posts is null OR U.likes is null OR (U.posts + U.likes) > :minPosts)")
                 .setParameter("minPosts", minPosts)
                 .getResultList();
     }
