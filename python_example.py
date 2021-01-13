@@ -21,6 +21,25 @@ users_non_private = pd.read_sql_query("SELECT * from users WHERE private_account
 users_verified = pd.read_sql_query("SELECT * from users WHERE verified = 1", con)
 posts_per_date = pd.read_sql_query("SELECT substr(created_at, 0, 9), COUNT(1) FROM posts GROUP BY 1 ORDER BY 1 DESC", con)
 post_body_and_author_username = pd.read_sql_query("SELECT posts.body, users.username FROM posts JOIN users ON posts.creator_id=users.id WHERE posts.body != ''", con)
+interactions_with_names = pd.read_sql_query("""SELECT
+    username,
+    badges,
+    interactions & 1 > 0 AS i0_accepts_tips,
+    interactions & 2 > 0 AS i1_static_feeds,
+    interactions & 4 > 0 AS i2_dark_parley,
+    interactions & 8 > 0 AS i3_influence_disabled,
+    interactions & 16 > 0 AS i4_influence_admin_disabled,
+    interactions & 32 > 0 AS i5_iaa_permitted,
+    interactions & 64 > 0 AS i6_iaa_banning,
+    interactions & 128 > 0 AS i7_self_sensitive,
+    interactions & 256 > 0 AS i8_no_sensitive,
+    interactions & 512 > 0 AS i9_sensitive_lockout,
+    interactions & 1024 > 0 AS i10_admin_sensitive,
+    interactions & 2048 > 0 AS i11_admin_discover,
+    interactions & 4096 > 0 AS i12_unknown,
+    interactions & 8192 > 0 AS i13_unknown
+FROM users;
+""", con)
 
 # Close the connection when complete
 con.close()
@@ -57,6 +76,9 @@ print(users_verified.head())
 
 print("\n\n\nNumber of posts from each date")
 print(posts_per_date.head())
+
+print("\n\n\nUser interactions")
+print(interactions_with_names.head())
 
 pd.set_option('display.max_colwidth', 90)
 print("\n\n\nPost Body and the Author's Username")

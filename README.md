@@ -109,7 +109,22 @@ A json list of integers corresponding to badges on users' profiles. Here are wha
   * 2 - Parler Partner: Publisher uses Parler Commenting to import all articles, content and comments from their website community.
   * 3 - Parler Affiliate: Affiliates permit Parler to import articles directly from their website.
   * 4 - Private Account: Private accounts will only allow approved followers to see their Parleys\
-  NOTE: These almost always have `private_account=1`, but rarely `private_account=0` - in this case the user has a private badge but their posts are still publicly visible. This is probably a Parler bug and might indicate users who think they are private but aren't actually because their settings didn't save correctly.
+  NOTE: These almost always have `private_account=1`, but rarely `private_account=0` - in this case the user has a private badge but their posts are still publicly visible. This is probably a Parler bug and might indicate users who think they are private but aren't actually because their settings didn't save correctly. This data can be scrubbed using these sql commands:
+  ```
+  DELETE FROM posts
+  WHERE creator_id IN (
+	  SELECT id
+	  FROM users
+	  WHERE
+		  badges LIKE '%4%'
+		  AND private_account=0
+  );
+
+  DELETE FROM users
+  WHERE
+	  badges LIKE '%4%'
+	  AND private_account=0;
+  ```
   * 5 - Real Member Restricted Comments Badge: Are verified unique people in the Parler network. This does not mean the person is who they claim to be, just that they are Parler Citizens. The darker badge color indicates they restrict communications to other Parler Citizens.
   * 6 - Parody Account: A comical depiction of a high profile individual
   * 7 - Parler Employee: An employee of Parler
@@ -136,7 +151,23 @@ This seems to be identical to Badge 0
 * `integration` (boolean: `0` or `1`)\
 This seems to be identical to Badge 2
 * `interactions` (e.g. `6247`)\
-Unclear. Over half of users have values of either 258 or 259. The values are almost all slightly above a power of 2, suggesting this might be some kind of bitfield which usually has a small number of bits set.
+This is a bitfield of permitted interactions. These are the names of the fields for each bit within the Android app (when they exist) as well as functions in iOS which return true if this bit is true:
+  * 0 - ACCEPTS_TIPS - `userCanRecieveTip` in iOS
+  * 1 - STATIC_FEEDS
+  * 2 - DARK_PARLEY - This seems to be the internal name for "Influencer Campaigns"
+  * 3 - INFLUENCE_DISABLED
+  * 4 - INFLUENCE_ADMIN_DISABLED
+  * 5 - IAA_PERMITTED - `canModerate()` in iOS
+  * 6 - IAA_BANNING - `canBan()` and `canBlockUrl()` in iOS
+  * 7 - SELF_SENSITIVE
+  * 8 - NO_SENSITIVE - `nsfwFilterON()` in iOS
+  * 9 - SENSITIVE_LOCKOUT
+  * 10 - ADMIN_SENSITIVE
+  * 11 - ADMIN_DISCOVER
+  * 12 - Not found in Android - `canBan()` in iOS
+  * 13 - Unclear (@Marklevinshow is the only example I can find)
+  
+  These can be obtained in Python using code like the following: `iaa_banning = ((interactions >> 6) & 1) > 0`, replacing the `6` with the index of whichever field you are looking for.
 * `is_following_you` (boolean: `0` or `1`)\
 Whether or not this user follows you
 * `joined` (e.g. `20200624154405`)\
