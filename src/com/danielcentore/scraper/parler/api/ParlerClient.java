@@ -5,10 +5,17 @@ import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketTimeoutException;
 import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import com.danielcentore.scraper.parler.PUtils;
 import com.danielcentore.scraper.parler.api.components.PagedParlerPosts;
@@ -17,9 +24,10 @@ import com.danielcentore.scraper.parler.api.components.ParlerMaybeErrorResponse;
 import com.danielcentore.scraper.parler.api.components.ParlerUser;
 import com.danielcentore.scraper.parler.gui.ParlerScraperGui;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Handles communication with the Parler API
@@ -47,9 +55,9 @@ public class ParlerClient {
     private String jst;
 
     private ParlerScraperGui gui;
-    
+
     private long lastRequest = 0;
-    
+
     private volatile boolean stopRequested = false;
 
     public ParlerClient(String mst, String jst, ParlerScraperGui gui) {
@@ -61,7 +69,7 @@ public class ParlerClient {
 
     public String issueRequest(String referrer, String endpoint) throws InterruptedIOException {
         stopRequested = false;
-        
+
         int attempt = 0;
         long waitTime = 500 + random.nextInt(1500);
         if (lastRequest > 0) {
@@ -111,8 +119,11 @@ public class ParlerClient {
     }
 
     private Response issueRequestNoRetry(String referrer, String endpoint) throws IOException {
-        OkHttpClient client = new OkHttpClient();
-        client.setReadTimeout(TIMEOUT_SEC, TimeUnit.SECONDS);
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(TIMEOUT_SEC, TimeUnit.SECONDS)
+                .writeTimeout(TIMEOUT_SEC, TimeUnit.SECONDS)
+                .readTimeout(TIMEOUT_SEC, TimeUnit.SECONDS)
+                .build();
 
         Request request = new Request.Builder()
                 .addHeader("User-Agent", USER_AGENT)
@@ -193,11 +204,11 @@ public class ParlerClient {
 
         return null;
     }
-    
+
     public PagedParlerPosts fetchPagedLikes(ParlerUser user) throws InterruptedIOException {
         return fetchPagedLikes(user, null);
     }
-    
+
     public PagedParlerPosts fetchPagedLikes(ParlerUser user, ParlerTime start) throws InterruptedIOException {
         String response = fetchPagedUserResponse("profile/" + user.getUrlEncodedUsername() + "/posts",
                 "v1/post/creator/liked", user, start);
@@ -316,7 +327,7 @@ public class ParlerClient {
     public void addCookieListener(ICookiesListener listener) {
         cookiesListeners.add(listener);
     }
-    
+
     public void stop() {
         this.stopRequested = true;
     }

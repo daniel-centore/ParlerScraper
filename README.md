@@ -151,7 +151,7 @@ This seems to be identical to Badge 0
 * `integration` (boolean: `0` or `1`)\
 This seems to be identical to Badge 2
 * `interactions` (e.g. `6247`)\
-This is a bitfield of permitted interactions. These are the names of the fields for each bit within the Android app (when they exist) as well as functions in iOS which return true if this bit is true:
+This used to be a bitfield of permitted interactions. It seems to always be 0 after the February 2021 relaunch. The following is preserved for historical reasons. These are the names of the fields for each bit within the Android app (when they exist) as well as functions in iOS which return true if this bit is true:
   * 0 - ACCEPTS_TIPS - `userCanRecieveTip` in iOS
   * 1 - STATIC_FEEDS
   * 2 - DARK_PARLEY - This seems to be the internal name for "Influencer Campaigns"
@@ -167,7 +167,7 @@ This is a bitfield of permitted interactions. These are the names of the fields 
   * 12 - Not found in Android - `canBan()` in iOS
   * 13 - Unclear (@Marklevinshow is the only example I can find)
   
-  These can be obtained in Python using code like the following: `iaa_banning = ((interactions >> 6) & 1) > 0`, replacing the `6` with the index of whichever field you are looking for.
+  These can be obtained in Python using code like the following: `iaa_banning = ((interactions >> 6) & 1) > 0`, replacing the `6` with the index of whichever field you are looking for. There is also a sql example in [python_example.py](python_example.py).
 * `is_following_you` (boolean: `0` or `1`)\
 Whether or not this user follows you
 * `joined` (e.g. `20200624154405`)\
@@ -247,6 +247,8 @@ Nominally setting this to `1` means that the content can only be viewed if "Hide
 The link used within the share button. This is often null; the share button is missing in this case. However, even when this is null, going to `https://parler.com/post/`{id} let's you view the post.
 * `state` (e.g. `4`)\
 Unclear. Almost always 4. Sometimes null or 7.
+* `trolling` (boolean: `0` or `1`)\
+Unclear. This did not exist before the February 2021 relaunch but existed after it.
 * `upvotes` (e.g. `64000`)\
 The number of times this post has been upvoted
 

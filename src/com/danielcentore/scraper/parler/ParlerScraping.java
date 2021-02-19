@@ -35,6 +35,9 @@ public class ParlerScraping {
 
     private static final int UNENCOUNTERED_BIAS = 2;
 
+    // The earliest possible time (since Parler was restarted)
+    //    private static final ParlerTime EARLIEST_TIME = ParlerTime.fromYyyyMmDd("2021-02-14");
+
     // Many users have a "I just joined Parler! Looking forward to meeting everyone here." post, let's get real posts
     public static final int MINIMUM_POSTS = 2;
 
@@ -207,6 +210,11 @@ public class ParlerScraping {
             start = joinedTime;
         }
 
+        //        // No reason to scan before the Parler relaunch
+        //        if (start.compareTo(EARLIEST_TIME) < 0) {
+        //            start = EARLIEST_TIME;
+        //        }
+
         // Use the user's joined time for followers and following
         ParlerTime earliest = joinedTime != null ? joinedTime : startTime;
 
@@ -229,26 +237,27 @@ public class ParlerScraping {
         if (stopRequested) {
             return;
         }
-        
-        if (profile.getLikes() != null && profile.getLikes() == 0) {
-            gui.println(TAB + "User has liked 0 posts; skipping post likes API call");
-        } else {
-            ParlerTime randomTime = getRandomTime(ScrapeType.USER_LIKES, userId, start, end);
-            gui.println(TAB + "Fetching liked posts from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
-            PagedParlerPosts pagedPosts = client.fetchPagedLikes(profile, randomTime);
-            if (pagedPosts != null) {
-                int postCount = pagedPosts.getPostCount();
-                gui.println(TAB + "Storing " + postCount + " posts in local DB...");
-                db.storePagedPosts(pagedPosts);
-            } else {
-                gui.println(TAB + "Failure - Blacklisting this query and earlier");
-            }
-            db.storeScrapedRange(ScrapeType.USER_LIKES, userId, randomTime, pagedPosts);
-        }
-        
-        if (stopRequested) {
-            return;
-        }
+
+        // Likes seem to be not working in the Feb 2021 relaunch  
+        //        if (profile.getLikes() != null && profile.getLikes() == 0) {
+        //            gui.println(TAB + "User has liked 0 posts; skipping post likes API call");
+        //        } else {
+        //            ParlerTime randomTime = getRandomTime(ScrapeType.USER_LIKES, userId, start, end);
+        //            gui.println(TAB + "Fetching liked posts from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
+        //            PagedParlerPosts pagedPosts = client.fetchPagedLikes(profile, randomTime);
+        //            if (pagedPosts != null) {
+        //                int postCount = pagedPosts.getPostCount();
+        //                gui.println(TAB + "Storing " + postCount + " posts in local DB...");
+        //                db.storePagedPosts(pagedPosts);
+        //            } else {
+        //                gui.println(TAB + "Failure - Blacklisting this query and earlier");
+        //            }
+        //            db.storeScrapedRange(ScrapeType.USER_LIKES, userId, randomTime, pagedPosts);
+        //        }
+        //        
+        //        if (stopRequested) {
+        //            return;
+        //        }
 
         if (profile.getFollowing() != null && profile.getFollowing() == 0) {
             gui.println(TAB + "User is following 0 people; skipping followee API call");
@@ -266,25 +275,26 @@ public class ParlerScraping {
             db.storeScrapedRange(ScrapeType.USER_FOLLOWEES, userId, randomTime, pagedFollowing);
         }
 
-        if (stopRequested) {
-            return;
-        }
-
-        if (profile.getFollowers() != null && profile.getFollowers() == 0) {
-            gui.println(TAB + "User has 0 followers; skipping followers API call");
-        } else {
-            ParlerTime randomTime = getRandomTime(ScrapeType.USER_FOLLOWERS, userId, earliest, end);
-            gui.println(TAB + "Fetching followers from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
-            PagedParlerUsers pagedFollowers = client.fetchFollowers(profile, randomTime);
-            if (pagedFollowers != null) {
-                int followersCount = pagedFollowers.getUsers().size();
-                gui.println(TAB + "Storing " + followersCount + " followers in local DB...");
-                db.storePagedUsers(pagedFollowers);
-            } else {
-                gui.println(TAB + "Failure - Blacklisting this query and earlier");
-            }
-            db.storeScrapedRange(ScrapeType.USER_FOLLOWERS, userId, randomTime, pagedFollowers);
-        }
+        // Followers viewing seems to have been more or less disabled in the Feb 2021 relaunch  
+        //        if (stopRequested) {
+        //            return;
+        //        }
+        //
+        //        if (profile.getFollowers() != null && profile.getFollowers() == 0) {
+        //            gui.println(TAB + "User has 0 followers; skipping followers API call");
+        //        } else {
+        //            ParlerTime randomTime = getRandomTime(ScrapeType.USER_FOLLOWERS, userId, earliest, end);
+        //            gui.println(TAB + "Fetching followers from API [" + randomTime.toSimpleDateTimeFormat() + "]...");
+        //            PagedParlerUsers pagedFollowers = client.fetchFollowers(profile, randomTime);
+        //            if (pagedFollowers != null) {
+        //                int followersCount = pagedFollowers.getUsers().size();
+        //                gui.println(TAB + "Storing " + followersCount + " followers in local DB...");
+        //                db.storePagedUsers(pagedFollowers);
+        //            } else {
+        //                gui.println(TAB + "Failure - Blacklisting this query and earlier");
+        //            }
+        //            db.storeScrapedRange(ScrapeType.USER_FOLLOWERS, userId, randomTime, pagedFollowers);
+        //        }
 
         gui.println(TAB + "Done.");
     }

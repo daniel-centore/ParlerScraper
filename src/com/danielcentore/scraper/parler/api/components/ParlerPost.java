@@ -84,6 +84,9 @@ public class ParlerPost {
 
     @JsonProperty("shareLink")
     String shareLink;
+    
+    @JsonProperty("trolling")
+    Boolean trolling;
 
     // If this is a share of a share of a share, then the root is the very first
     // post
@@ -300,6 +303,15 @@ public class ParlerPost {
 
     public void setUpvotes(Long upvotes) {
         this.upvotes = upvotes;
+    }
+    
+    @Column(name = "trolling")
+    public boolean getTrolling() {
+        return trolling;
+    }
+
+    public void setTrolling(boolean trolling) {
+        this.trolling = trolling;
     }
 
     @Override
